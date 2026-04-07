@@ -1,0 +1,22 @@
+# Virtual environment
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment secrets
+.env
+
+# VS Code
+.vscode/
+
+# Mac junk
+.DS_Store
+
+# Test cache
+.pytest_cache/
+.coverage
