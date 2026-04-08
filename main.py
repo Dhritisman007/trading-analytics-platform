@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
-from routers import market
+from routers import market, indicators, fvg
 
 app = FastAPI(
     title=settings.app_name,
@@ -23,6 +23,8 @@ app.add_middleware(
 
 # Register routers
 app.include_router(market.router)
+app.include_router(indicators.router)
+app.include_router(fvg.router)
 
 @app.get("/", tags=["Health"])
 def root():
