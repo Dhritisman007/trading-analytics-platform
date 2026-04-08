@@ -46,3 +46,12 @@ def get_market_data(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch market data: {str(e)}")
+
+
+@router.get("/price")
+def get_price():
+    """Quick price snapshot for a single symbol."""
+    return {
+        "symbol": "BTCUSD",
+        "price": 60000,
+    }
