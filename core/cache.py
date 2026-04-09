@@ -82,3 +82,8 @@ class TTLCache:
 
 # Single shared instance used across the entire application
 cache = TTLCache()
+
+
+def get_cache_stats() -> dict:
+    """Wrapper function to get cache stats from the global cache instance."""
+    return cache.stats()

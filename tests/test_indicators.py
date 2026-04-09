@@ -119,11 +119,13 @@ class TestValidateWindows:
         _validate_windows(14, 20, 14)  # should not raise
 
     def test_rsi_window_too_large_raises(self):
-        with pytest.raises(ValueError, match="rsi_window"):
+        from core.exceptions import InvalidParameterError
+        with pytest.raises(InvalidParameterError, match="rsi_window"):
             _validate_windows(999, 20, 14)
 
     def test_ema_window_too_large_raises(self):
-        with pytest.raises(ValueError, match="ema_window"):
+        from core.exceptions import InvalidParameterError
+        with pytest.raises(InvalidParameterError, match="ema_window"):
             _validate_windows(14, 999, 14)
 
 

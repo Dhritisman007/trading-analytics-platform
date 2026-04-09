@@ -3,6 +3,7 @@
 import pandas as pd
 import logging
 from services.market_service import fetch_market_data
+from core.exceptions import InsufficientDataError
 from utils.formatters import format_number
 from core.cache import cache
 
@@ -90,7 +91,11 @@ def detect_fvgs(
 
     # Need at least 3 candles to detect any FVG
     if len(df) < 3:
-        raise ValueError("Need at least 3 candles to detect FVGs. Use a longer period.")
+        raise InsufficientDataError(
+            required=3,
+            got=len(df),
+            context="FVG detection requires at least 3 candles. Use a longer period."
+        )
 
     fvgs = []
 

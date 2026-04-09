@@ -1,6 +1,6 @@
 # routers/indicators.py
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from services.indicator_calculator import get_indicators
 
 router = APIRouter(prefix="/indicators", tags=["Technical Indicators"])
@@ -37,20 +37,16 @@ def get_indicator_data(
     Returns OHLC + RSI, EMA, MACD, ATR for the given symbol.
     Includes a 'latest' snapshot with plain-English signals for the dashboard.
     All indicator windows are configurable via query params.
+    Errors are handled globally by the exception handler.
     """
-    try:
-        return get_indicators(
-            symbol=symbol,
-            period=period,
-            interval=interval,
-            rsi_window=rsi_window,
-            ema_window=ema_window,
-            atr_window=atr_window,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Indicator calculation failed: {str(e)}")
+    return get_indicators(
+        symbol=symbol,
+        period=period,
+        interval=interval,
+        rsi_window=rsi_window,
+        ema_window=ema_window,
+        atr_window=atr_window,
+    )
 
 
 @router.get("/latest")
@@ -62,15 +58,10 @@ def get_latest_signals(
     Returns only the latest signals snapshot — no full data array.
     Faster for dashboard header cards that just need the current reading.
     """
-    try:
-        result = get_indicators(symbol=symbol, period=period)
-        return {
-            "symbol":  result["symbol"],
-            "name":    result["name"],
-            "latest":  result["latest"],
-            "windows": result["windows"],
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    result = get_indicators(symbol=symbol, period=period)
+    return {
+        "symbol":  result["symbol"],
+        "name":    result["name"],
+        "latest":  result["latest"],
+        "windows": result["windows"],
+    }

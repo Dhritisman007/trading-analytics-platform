@@ -122,3 +122,35 @@ def create_scheduler() -> BackgroundScheduler:
     )
 
     return scheduler
+
+
+# Global scheduler instance
+_scheduler: BackgroundScheduler | None = None
+
+
+def start_scheduler():
+    """Start the background scheduler on app startup."""
+    global _scheduler
+    _scheduler = create_scheduler()
+    run_initial_warmup()
+    _scheduler.start()
+    logger.info("Scheduler started successfully")
+
+
+def stop_scheduler():
+    """Stop the background scheduler on app shutdown."""
+    global _scheduler
+    if _scheduler:
+        _scheduler.shutdown()
+        logger.info("Scheduler shut down cleanly")
+
+
+def get_scheduler_status() -> dict:
+    """Return current scheduler status for health check."""
+    global _scheduler
+    if _scheduler is None:
+        return {"status": "not_initialized"}
+    return {
+        "status": "running" if _scheduler.running else "stopped",
+        "jobs": len(_scheduler.get_jobs()),
+    }

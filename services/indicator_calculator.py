@@ -4,6 +4,7 @@ import pandas as pd
 import ta
 import logging
 from services.market_service import fetch_market_data
+from core.exceptions import InvalidParameterError, InsufficientDataError
 from utils.formatters import format_number
 from core.cache import cache
 
@@ -23,11 +24,23 @@ MIN_CANDLES_REQUIRED = max(WARMUP.values()) + 10  # buffer of 10 extra candles
 def _validate_windows(rsi_window: int, ema_window: int, atr_window: int):
     """Catch bad window values before they cause confusing errors downstream."""
     if not (2 <= rsi_window <= 50):
-        raise ValueError(f"rsi_window must be between 2 and 50, got {rsi_window}")
+        raise InvalidParameterError(
+            param="rsi_window",
+            value=rsi_window,
+            reason="Must be between 2 and 50"
+        )
     if not (2 <= ema_window <= 200):
-        raise ValueError(f"ema_window must be between 2 and 200, got {ema_window}")
+        raise InvalidParameterError(
+            param="ema_window",
+            value=ema_window,
+            reason="Must be between 2 and 200"
+        )
     if not (2 <= atr_window <= 50):
-        raise ValueError(f"atr_window must be between 2 and 50, got {atr_window}")
+        raise InvalidParameterError(
+            param="atr_window",
+            value=atr_window,
+            reason="Must be between 2 and 50"
+        )
 
 
 def calculate_rsi(close: pd.Series, window: int = 14) -> pd.Series:
@@ -154,10 +167,10 @@ def get_indicators(
     }, inplace=True)
 
     if len(df) < MIN_CANDLES_REQUIRED:
-        raise ValueError(
-            f"Not enough data to calculate indicators. "
-            f"Need at least {MIN_CANDLES_REQUIRED} candles, got {len(df)}. "
-            f"Try a longer period (e.g. period=3mo)."
+        raise InsufficientDataError(
+            required=MIN_CANDLES_REQUIRED,
+            got=len(df),
+            context="Try period=3mo or longer"
         )
 
     # ── Calculate indicators ──────────────────────────────────────────────────

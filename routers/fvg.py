@@ -1,6 +1,6 @@
 # routers/fvg.py
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from services.fvg_service import detect_fvgs
 
 router = APIRouter(prefix="/fvg", tags=["Smart Money Concepts"])
@@ -34,19 +34,15 @@ def get_fvgs(
     Detect Fair Value Gaps (Smart Money Concepts) in market data.
     Returns all bullish and bearish FVGs with fill status and strength rating.
     The 'nearest_open_fvg' field shows the most actionable gap near current price.
+    Errors are handled globally by the exception handler.
     """
-    try:
-        return detect_fvgs(
-            symbol=symbol,
-            period=period,
-            interval=interval,
-            min_gap_size=min_gap_size,
-            only_open=only_open,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"FVG detection failed: {str(e)}")
+    return detect_fvgs(
+        symbol=symbol,
+        period=period,
+        interval=interval,
+        min_gap_size=min_gap_size,
+        only_open=only_open,
+    )
 
 
 @router.get("/open")
@@ -59,14 +55,9 @@ def get_open_fvgs(
     Shortcut endpoint — returns only unfilled FVGs.
     Used by the dashboard's 'Active FVG Zones' panel.
     """
-    try:
-        return detect_fvgs(
-            symbol=symbol,
-            period=period,
-            only_open=True,
-            min_gap_size=min_gap_size,
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return detect_fvgs(
+        symbol=symbol,
+        period=period,
+        only_open=True,
+        min_gap_size=min_gap_size,
+    )

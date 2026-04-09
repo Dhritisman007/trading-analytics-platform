@@ -3,6 +3,7 @@ import random
 import logging
 from typing import Dict, List
 from core.cache import cache
+from core.exceptions import InvalidParameterError, SymbolNotFoundError
 from utils.formatters import format_number
 
 logger = logging.getLogger(__name__)
@@ -19,9 +20,17 @@ def validate_params(period: str, interval: str) -> None:
     allowed_intervals = {"1d", "1wk", "1mo"}
 
     if period not in allowed_periods:
-        raise ValueError("Invalid period")
+        raise InvalidParameterError(
+            param="period",
+            value=period,
+            reason=f"Valid options: {allowed_periods}"
+        )
     if interval not in allowed_intervals:
-        raise ValueError("Invalid interval")
+        raise InvalidParameterError(
+            param="interval",
+            value=interval,
+            reason=f"Valid options: {allowed_intervals}"
+        )
 
 
 def _count_for_period(period: str) -> int:
@@ -63,7 +72,7 @@ def fetch_market_data(symbol: str, period: str = "3mo", interval: str = "1d") ->
     }
 
     if symbol not in supported:
-        raise ValueError("Unknown symbol")
+        raise SymbolNotFoundError(symbol)
 
     name = supported[symbol]
     count = _count_for_period(period)
