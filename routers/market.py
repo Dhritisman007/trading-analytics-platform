@@ -55,3 +55,4 @@ def get_price():
         "symbol": "BTCUSD",
         "price": 60000,
     }
+

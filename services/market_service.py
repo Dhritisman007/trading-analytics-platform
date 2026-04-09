@@ -1,6 +1,17 @@
 import datetime
 import random
+import logging
 from typing import Dict, List
+from core.cache import cache
+from utils.formatters import format_number
+
+logger = logging.getLogger(__name__)
+
+KNOWN_SYMBOLS = {
+    "^NSEI": "Nifty 50",
+    "^BSESN": "BSE Sensex",
+    "^NSEBANK": "Bank Nifty",
+}
 
 
 def validate_params(period: str, interval: str) -> None:
@@ -23,6 +34,18 @@ def _count_for_period(period: str) -> int:
         "5y": 1260,
     }
     return mapping.get(period, 22)
+
+
+def format_ohlc_row(date, row) -> dict:
+    """Format a single OHLCV row from yfinance."""
+    return {
+        "date": str(date.date()),
+        "open": format_number(row["Open"]),
+        "high": format_number(row["High"]),
+        "low": format_number(row["Low"]),
+        "close": format_number(row["Close"]),
+        "volume": int(row["Volume"]),
+    }
 
 
 def fetch_market_data(symbol: str, period: str = "3mo", interval: str = "1d") -> Dict:

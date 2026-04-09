@@ -2,8 +2,12 @@
 
 import pandas as pd
 import ta
+import logging
 from services.market_service import fetch_market_data
 from utils.formatters import format_number
+from core.cache import cache
+
+logger = logging.getLogger(__name__)
 
 # ── Warm-up periods ───────────────────────────────────────────────────────────
 # Each indicator needs N candles before it produces a valid value.
@@ -126,6 +130,15 @@ def get_indicators(
     """
     _validate_windows(rsi_window, ema_window, atr_window)
 
+    # Cache key encodes all parameters that affect the result
+    cache_key = f"indicators:{symbol}:{period}:{interval}:{rsi_window}:{ema_window}:{atr_window}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        logger.info(f"Cache HIT — indicators: {cache_key}")
+        return cached
+
+    logger.info(f"Cache MISS — computing indicators: {cache_key}")
+
     # Reuse Day 2's service — no duplicate yfinance calls
     market_data = fetch_market_data(symbol=symbol, period=period, interval=interval)
 
@@ -181,7 +194,7 @@ def get_indicators(
             "macd_histogram": format_number(row["MACD_Histogram"]),
         })
 
-    return {
+    result = {
         "symbol":     symbol,
         "name":       market_data["name"],
         "period":     period,
@@ -191,3 +204,8 @@ def get_indicators(
         "latest":     _get_latest_signals(df),  # snapshot for dashboard header
         "data":       rows,
     }
+
+    # Cache the result for 5 minutes
+    cache.set(cache_key, result, ttl_seconds=300)
+    logger.info(f"Cache SET — indicators: {cache_key}")
+    return result

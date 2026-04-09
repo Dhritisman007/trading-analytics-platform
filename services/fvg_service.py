@@ -1,8 +1,12 @@
 # services/fvg_service.py
 
 import pandas as pd
+import logging
 from services.market_service import fetch_market_data
 from utils.formatters import format_number
+from core.cache import cache
+
+logger = logging.getLogger(__name__)
 
 
 def _classify_fvg_strength(gap_size: float, atr: float | None) -> str:
@@ -68,6 +72,15 @@ def detect_fvgs(
     Returns:
         dict with all detected FVGs, summary counts, and latest price context
     """
+    # ── Cache check ───────────────────────────────────────────────────────
+    cache_key = f"fvg:{symbol}:{period}:{interval}:{min_gap_size}:{only_open}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        logger.info(f"Cache HIT — FVGs: {cache_key}")
+        return cached
+
+    logger.info(f"Cache MISS — detecting FVGs: {cache_key}")
+
     # Reuse Day 2's service — same pattern as indicators
     market_data = fetch_market_data(symbol=symbol, period=period, interval=interval)
 
@@ -179,7 +192,7 @@ def detect_fvgs(
             key=lambda f: abs((f["gap_top"] + f["gap_bottom"]) / 2 - latest_price)
         )
 
-    return {
+    result = {
         "symbol":       symbol,
         "name":         market_data["name"],
         "period":       period,
@@ -198,3 +211,8 @@ def detect_fvgs(
         "nearest_open_fvg": nearest_open,
         "fvgs":         fvgs,
     }
+
+    # Cache the result for 10 minutes
+    cache.set(cache_key, result, ttl_seconds=600)
+    logger.info(f"Cache SET — FVGs: {cache_key}")
+    return result
