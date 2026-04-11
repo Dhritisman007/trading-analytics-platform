@@ -91,9 +91,10 @@ class TestPredictEndpoint:
     def test_response_has_required_keys(self):
         r = client.get("/predict/")
         body = r.json()
+        # New response format has different keys
         for key in ["symbol", "signal", "confidence",
                     "probabilities", "explanation",
-                    "top_features", "model_info", "disclaimer"]:
+                    "contributions", "market_context"]:
             assert key in body, f"Missing key: {key}"
 
     def test_signal_is_buy_or_sell(self):
@@ -113,12 +114,17 @@ class TestPredictEndpoint:
 
     def test_top_features_not_empty(self):
         r = client.get("/predict/")
-        assert len(r.json()["top_features"]) > 0
+        # New response format uses "contributions" instead of "top_features"
+        assert len(r.json()["contributions"]) > 0
 
     def test_explanation_is_string(self):
         r = client.get("/predict/")
-        assert isinstance(r.json()["explanation"], str)
-        assert len(r.json()["explanation"]) > 10
+        # New format: explanation is dict with one_line, simple, technical
+        explanation = r.json()["explanation"]
+        assert isinstance(explanation, dict)
+        assert "one_line" in explanation
+        assert isinstance(explanation["one_line"], str)
+        assert len(explanation["one_line"]) > 10
 
     def test_disclaimer_present(self):
         r = client.get("/predict/")
@@ -151,12 +157,13 @@ class TestPredictEndpoint:
         assert confidence == max_prob
 
     def test_top_features_have_numeric_values(self):
-        """Test that top features are numeric importance scores."""
+        """Test that contributions have numeric importance scores."""
         r = client.get("/predict/")
-        top_features = r.json()["top_features"]
-        for feature, importance in top_features.items():
-            assert isinstance(importance, (int, float))
-            assert importance >= 0
+        contributions = r.json()["contributions"]
+        for contrib in contributions:
+            assert "importance" in contrib
+            assert isinstance(contrib["importance"], (int, float))
+            assert contrib["importance"] >= 0
 
     def test_prediction_response_includes_symbol_and_name(self):
         """Test that response includes symbol and friendly name."""
