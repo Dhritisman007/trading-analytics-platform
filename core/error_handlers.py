@@ -5,8 +5,8 @@ import traceback
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from core.exceptions import TradingPlatformError
@@ -16,21 +16,21 @@ logger = logging.getLogger(__name__)
 
 def _error_response(
     status_code: int,
-    error_type:  str,
-    message:     str,
-    path:        str,
-    details:     dict | None = None,
+    error_type: str,
+    message: str,
+    path: str,
+    details: dict | None = None,
 ) -> JSONResponse:
     """
     Build a consistent error JSON response.
     Every single error from this API looks exactly like this — no exceptions.
     """
     body = {
-        "error":       error_type,
-        "message":     message,
+        "error": error_type,
+        "message": message,
         "status_code": status_code,
-        "path":        path,
-        "timestamp":   datetime.now(timezone.utc).isoformat(),
+        "path": path,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     if details:
         body["details"] = details
@@ -72,11 +72,13 @@ def register_error_handlers(app: FastAPI) -> None:
         errors = []
         for error in exc.errors():
             field = " → ".join(str(loc) for loc in error["loc"])
-            errors.append({
-                "field":   field,
-                "message": error["msg"],
-                "value":   error.get("input"),
-            })
+            errors.append(
+                {
+                    "field": field,
+                    "message": error["msg"],
+                    "value": error.get("input"),
+                }
+            )
 
         logger.warning(
             f"ValidationError | {request.method} {request.url.path} | "
@@ -107,9 +109,7 @@ def register_error_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def unhandled_error_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
+    async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
         """
         Catch-all for any exception that wasn't handled above.
         Logs the full traceback so you can debug it, but only returns

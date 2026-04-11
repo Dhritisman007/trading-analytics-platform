@@ -1,9 +1,11 @@
 # tests/test_cache.py
 
 import time
+
 import pytest
-from core.cache import TTLCache
 from fastapi.testclient import TestClient
+
+from core.cache import TTLCache
 from main import app
 
 client = TestClient(app)

@@ -1,6 +1,7 @@
 # routers/fvg.py
 
 from fastapi import APIRouter, Query
+
 from services.fvg_service import detect_fvgs
 
 router = APIRouter(prefix="/fvg", tags=["Smart Money Concepts"])
@@ -9,25 +10,19 @@ router = APIRouter(prefix="/fvg", tags=["Smart Money Concepts"])
 @router.get("/")
 def get_fvgs(
     symbol: str = Query(
-        default="^NSEI",
-        description="^NSEI for Nifty 50, ^BSESN for Sensex"
+        default="^NSEI", description="^NSEI for Nifty 50, ^BSESN for Sensex"
     ),
     period: str = Query(
-        default="3mo",
-        description="How far back to look: 1mo, 3mo, 6mo, 1y"
+        default="3mo", description="How far back to look: 1mo, 3mo, 6mo, 1y"
     ),
-    interval: str = Query(
-        default="1d",
-        description="Candle size: 1d, 1wk"
-    ),
+    interval: str = Query(default="1d", description="Candle size: 1d, 1wk"),
     min_gap_size: float = Query(
         default=0.0,
         ge=0.0,
-        description="Minimum gap size in price points. Use 50 to filter tiny gaps."
+        description="Minimum gap size in price points. Use 50 to filter tiny gaps.",
     ),
     only_open: bool = Query(
-        default=False,
-        description="If true, return only unfilled FVGs"
+        default=False, description="If true, return only unfilled FVGs"
     ),
 ):
     """

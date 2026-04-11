@@ -2,19 +2,19 @@
 
 import pytest
 from fastapi.testclient import TestClient
+
+from core.exceptions import DataFetchError
+from core.exceptions import InsufficientDataError
+from core.exceptions import InvalidParameterError
+from core.exceptions import SymbolNotFoundError
+from core.exceptions import TradingPlatformError
 from main import app
-from core.exceptions import (
-    TradingPlatformError,
-    SymbolNotFoundError,
-    InsufficientDataError,
-    InvalidParameterError,
-    DataFetchError,
-)
 
 client = TestClient(app)
 
 
 # ── Unit tests: custom exception classes ──────────────────────────────────────
+
 
 class TestCustomExceptions:
 
@@ -33,7 +33,7 @@ class TestCustomExceptions:
         exc = InvalidParameterError("period", "999y", "Must be 1mo–5y")
         assert exc.status_code == 400
         assert "period" in exc.message
-        assert "999y"   in exc.message
+        assert "999y" in exc.message
 
     def test_data_fetch_error_has_503_status(self):
         exc = DataFetchError("yfinance", "connection timeout")
@@ -51,11 +51,12 @@ class TestCustomExceptions:
 
     def test_base_exception_has_message_and_status(self):
         exc = TradingPlatformError("something broke", status_code=418)
-        assert exc.message     == "something broke"
+        assert exc.message == "something broke"
         assert exc.status_code == 418
 
 
 # ── Integration: error response shape ────────────────────────────────────────
+
 
 class TestErrorResponseShape:
 
@@ -90,13 +91,13 @@ class TestErrorResponseShape:
         r = client.get("/indicators/?rsi_window=999")
         body = r.json()
         assert "details" in body
-        assert "errors"  in body["details"]
+        assert "errors" in body["details"]
         assert len(body["details"]["errors"]) > 0
 
     def test_validation_error_details_has_field_and_message(self):
         r = client.get("/indicators/?rsi_window=999")
         error = r.json()["details"]["errors"][0]
-        assert "field"   in error
+        assert "field" in error
         assert "message" in error
 
     def test_not_found_route_returns_404(self):
@@ -119,6 +120,7 @@ class TestErrorResponseShape:
 
 
 # ── Verify successful responses still work ────────────────────────────────────
+
 
 class TestSuccessfulResponsesUnaffected:
     """

@@ -1,6 +1,7 @@
 # core/scheduler.py
 
 import logging
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
@@ -8,15 +9,15 @@ logger = logging.getLogger(__name__)
 
 # Symbols to keep warm in cache — add more here as your platform grows
 WATCHED_SYMBOLS = [
-    {"symbol": "^NSEI",   "name": "Nifty 50"},
-    {"symbol": "^BSESN",  "name": "Sensex"},
-    {"symbol": "^NSEBANK","name": "Bank Nifty"},
+    {"symbol": "^NSEI", "name": "Nifty 50"},
+    {"symbol": "^BSESN", "name": "Sensex"},
+    {"symbol": "^NSEBANK", "name": "Bank Nifty"},
 ]
 
 # How long cached data stays valid (seconds)
-MARKET_DATA_TTL   = 300   # 5 minutes
-INDICATOR_TTL     = 300   # 5 minutes
-FVG_TTL           = 600   # 10 minutes — FVGs change less frequently
+MARKET_DATA_TTL = 300  # 5 minutes
+INDICATOR_TTL = 300  # 5 minutes
+FVG_TTL = 600  # 10 minutes — FVGs change less frequently
 
 
 def refresh_market_data():
@@ -26,8 +27,8 @@ def refresh_market_data():
     APScheduler runs this in a background thread — never blocks the API.
     """
     # Import here to avoid circular imports at module load time
-    from services.market_service import fetch_market_data
     from core.cache import cache
+    from services.market_service import fetch_market_data
 
     for item in WATCHED_SYMBOLS:
         symbol = item["symbol"]
@@ -42,14 +43,16 @@ def refresh_market_data():
 
 def refresh_indicators():
     """Refresh indicator data for all watched symbols."""
-    from services.indicator_calculator import get_indicators
     from core.cache import cache
+    from services.indicator_calculator import get_indicators
 
     for item in WATCHED_SYMBOLS:
         symbol = item["symbol"]
         try:
             data = get_indicators(symbol=symbol, period="3mo", interval="1d")
-            cache.set(f"indicators:{symbol}:3mo:1d:14:20:14", data, ttl_seconds=INDICATOR_TTL)
+            cache.set(
+                f"indicators:{symbol}:3mo:1d:14:20:14", data, ttl_seconds=INDICATOR_TTL
+            )
             logger.info(f"Refreshed indicators: {symbol}")
         except Exception as e:
             logger.error(f"Failed to refresh indicators for {symbol}: {e}")
@@ -57,8 +60,8 @@ def refresh_indicators():
 
 def refresh_fvgs():
     """Refresh FVG data — runs less frequently since FVGs are slower to change."""
-    from services.fvg_service import detect_fvgs
     from core.cache import cache
+    from services.fvg_service import detect_fvgs
 
     for item in WATCHED_SYMBOLS:
         symbol = item["symbol"]
@@ -90,8 +93,8 @@ def create_scheduler() -> BackgroundScheduler:
     """
     scheduler = BackgroundScheduler(
         job_defaults={
-            "coalesce":        True,   # if a job is missed, run it once not multiple times
-            "max_instances":   1,      # never run the same job twice simultaneously
+            "coalesce": True,  # if a job is missed, run it once not multiple times
+            "max_instances": 1,  # never run the same job twice simultaneously
             "misfire_grace_time": 60,  # if delayed by up to 60s, still run it
         }
     )

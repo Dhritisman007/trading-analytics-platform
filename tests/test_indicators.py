@@ -1,24 +1,24 @@
 # tests/test_indicators.py
 
+import numpy as np
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
+
 from main import app
-from services.indicator_calculator import (
-    calculate_rsi,
-    calculate_ema,
-    calculate_macd,
-    calculate_atr,
-    get_indicators,
-    _validate_windows,
-    _interpret_rsi,
-)
-import pandas as pd
-import numpy as np
+from services.indicator_calculator import _interpret_rsi
+from services.indicator_calculator import _validate_windows
+from services.indicator_calculator import calculate_atr
+from services.indicator_calculator import calculate_ema
+from services.indicator_calculator import calculate_macd
+from services.indicator_calculator import calculate_rsi
+from services.indicator_calculator import get_indicators
 
 client = TestClient(app)
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def sample_close():
@@ -31,15 +31,18 @@ def sample_close():
 @pytest.fixture
 def sample_df(sample_close):
     """Full OHLCV DataFrame for ATR testing."""
-    df = pd.DataFrame({
-        "Close": sample_close,
-        "High":  sample_close + 50,
-        "Low":   sample_close - 50,
-    })
+    df = pd.DataFrame(
+        {
+            "Close": sample_close,
+            "High": sample_close + 50,
+            "Low": sample_close - 50,
+        }
+    )
     return df
 
 
 # ── Unit tests: individual calculators ───────────────────────────────────────
+
 
 class TestCalculateRSI:
 
@@ -68,7 +71,7 @@ class TestCalculateEMA:
         assert result.mean() > 0
 
     def test_longer_window_smoother(self, sample_close):
-        ema9  = calculate_ema(sample_close, window=9).dropna()
+        ema9 = calculate_ema(sample_close, window=9).dropna()
         ema50 = calculate_ema(sample_close, window=50).dropna()
         # Longer EMA has lower standard deviation = smoother
         assert ema50.std() < ema9.std()
@@ -84,10 +87,10 @@ class TestCalculateMACD:
 
     def test_histogram_is_macd_minus_signal(self, sample_close):
         result = calculate_macd(sample_close)
-        macd      = result["macd"].dropna()
-        signal    = result["signal"].dropna()
+        macd = result["macd"].dropna()
+        signal = result["signal"].dropna()
         histogram = result["histogram"].dropna()
-        combined  = (macd - signal).dropna()
+        combined = (macd - signal).dropna()
         # Align indexes before comparing
         common = histogram.index.intersection(combined.index)
         diff = (histogram[common] - combined[common]).abs()
@@ -97,9 +100,7 @@ class TestCalculateMACD:
 class TestCalculateATR:
 
     def test_returns_series(self, sample_df):
-        result = calculate_atr(
-            sample_df["High"], sample_df["Low"], sample_df["Close"]
-        )
+        result = calculate_atr(sample_df["High"], sample_df["Low"], sample_df["Close"])
         assert isinstance(result, pd.Series)
 
     def test_atr_always_positive(self, sample_df):
@@ -113,6 +114,7 @@ class TestCalculateATR:
 
 # ── Unit tests: validation + signals ─────────────────────────────────────────
 
+
 class TestValidateWindows:
 
     def test_valid_windows_pass(self):
@@ -120,11 +122,13 @@ class TestValidateWindows:
 
     def test_rsi_window_too_large_raises(self):
         from core.exceptions import InvalidParameterError
+
         with pytest.raises(InvalidParameterError, match="rsi_window"):
             _validate_windows(999, 20, 14)
 
     def test_ema_window_too_large_raises(self):
         from core.exceptions import InvalidParameterError
+
         with pytest.raises(InvalidParameterError, match="ema_window"):
             _validate_windows(14, 999, 14)
 
@@ -149,6 +153,7 @@ class TestInterpretRSI:
 
 # ── Integration tests: HTTP endpoint ─────────────────────────────────────────
 
+
 class TestIndicatorsEndpoint:
 
     def test_returns_200(self):
@@ -164,8 +169,19 @@ class TestIndicatorsEndpoint:
     def test_each_row_has_all_indicators(self):
         r = client.get("/indicators/?period=3mo")
         row = r.json()["data"][0]
-        for field in ["date", "open", "high", "low", "close",
-                      "rsi", "ema", "atr", "macd", "macd_signal", "macd_histogram"]:
+        for field in [
+            "date",
+            "open",
+            "high",
+            "low",
+            "close",
+            "rsi",
+            "ema",
+            "atr",
+            "macd",
+            "macd_signal",
+            "macd_histogram",
+        ]:
             assert field in row, f"Missing field: {field}"
 
     def test_rsi_in_range(self):

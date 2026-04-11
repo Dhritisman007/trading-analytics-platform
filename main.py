@@ -1,39 +1,60 @@
 # main.py
+
 import logging
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from core.config import settings
-from core.logging_config import setup_logging
-from core.error_handlers import register_error_handlers
-from core.middleware import RequestLoggingMiddleware
-from core.scheduler import start_scheduler, stop_scheduler, get_scheduler_status
 from core.cache import get_cache_stats
-from routers import market, indicators, fvg, cache
+from core.config import settings
+from core.error_handlers import register_error_handlers
+from core.logging_config import setup_logging
+from core.middleware import RequestLoggingMiddleware
+from core.scheduler import get_scheduler_status
+from core.scheduler import start_scheduler
+from core.scheduler import stop_scheduler
+from routers import auth_upstox
+from routers import cache
+from routers import fvg
+from routers import indicators
+from routers import live
+from routers import market
+from services.websocket_manager import start_websocket_feed
+from services.websocket_manager import stop_websocket_feed
 
-# Set up logging first — before anything else
 setup_logging(debug=settings.debug)
 logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info(f"Starting {settings.app_name} v0.6.0")
+    logger.info(f"Starting {settings.app_name}")
     start_scheduler()
+
+    # Only start WebSocket feed if Upstox token is configured
+    if settings.upstox_access_token:
+        await start_websocket_feed()
+        logger.info("Upstox WebSocket feed started")
+    else:
+        logger.info(
+            "No Upstox token — WebSocket feed skipped (set UPSTOX_ACCESS_TOKEN)"
+        )
+
     yield
+
+    await stop_websocket_feed()
     stop_scheduler()
-    logger.info("App shut down cleanly")
+    logger.info("Shutdown complete")
 
 
 app = FastAPI(
     title=settings.app_name,
     description="AI-powered trading analytics for Indian markets",
-    version="0.6.0",
+    version="0.7.0",
     lifespan=lifespan,
 )
 
-# Order matters: register middleware and error handlers before routers
 register_error_handlers(app)
 
 app.add_middleware(RequestLoggingMiddleware)
@@ -48,23 +69,30 @@ app.add_middleware(
 app.include_router(market.router)
 app.include_router(indicators.router)
 app.include_router(fvg.router)
+app.include_router(auth_upstox.router)
+app.include_router(live.router)
 app.include_router(cache.router)
 
 
 @app.get("/", tags=["Health"])
 def root():
     return {
-        "app":     settings.app_name,
-        "status":  "running",
-        "version": "0.6.0",
-        "docs":    "/docs",
+        "app": settings.app_name,
+        "status": "running",
+        "version": "0.7.0",
+        "provider": settings.data_provider,
+        "docs": "/docs",
     }
 
 
 @app.get("/health", tags=["Health"])
 def health():
+    from services.websocket_manager import is_connected
+
     return {
-        "status":    "healthy",
-        "cache":     get_cache_stats(),
+        "status": "healthy",
+        "data_provider": settings.data_provider,
+        "ws_connected": is_connected(),
+        "cache": get_cache_stats(),
         "scheduler": get_scheduler_status(),
     }

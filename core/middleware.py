@@ -1,7 +1,8 @@
 # core/middleware.py
 
-import time
 import logging
+import time
+
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -19,10 +20,10 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next):
-        start   = time.perf_counter()
-        method  = request.method
-        path    = request.url.path
-        query   = f"?{request.url.query}" if request.url.query else ""
+        start = time.perf_counter()
+        method = request.method
+        path = request.url.path
+        query = f"?{request.url.query}" if request.url.query else ""
 
         try:
             response = await call_next(request)
@@ -36,10 +37,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             else:
                 log = logger.info
 
-            log(f"{method:<6} {path}{query}  →  {response.status_code}  in {duration}ms")
+            log(
+                f"{method:<6} {path}{query}  →  {response.status_code}  in {duration}ms"
+            )
             return response
 
         except Exception as exc:
             duration = round((time.perf_counter() - start) * 1000)
-            logger.error(f"{method:<6} {path}{query}  →  500  in {duration}ms  [{type(exc).__name__}]")
+            logger.error(
+                f"{method:<6} {path}{query}  →  500  in {duration}ms  [{type(exc).__name__}]"
+            )
             raise

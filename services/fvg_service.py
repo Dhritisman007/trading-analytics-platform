@@ -1,11 +1,13 @@
 # services/fvg_service.py
 
-import pandas as pd
 import logging
-from services.market_service import fetch_market_data
-from core.exceptions import InsufficientDataError
-from utils.formatters import format_number
+
+import pandas as pd
+
 from core.cache import cache
+from core.exceptions import InsufficientDataError
+from services.market_service import fetch_market_data
+from utils.formatters import format_number
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +41,7 @@ def _check_if_filled(fvg: dict, df: pd.DataFrame, fvg_index: int) -> bool:
     For bearish FVG: price comes back up and a candle's high >= fvg_bottom
     We only check candles AFTER the FVG formed.
     """
-    subsequent = df.iloc[fvg_index + 1:]
+    subsequent = df.iloc[fvg_index + 1 :]
 
     if fvg["type"] == "bullish":
         # Gap zone: fvg_bottom to fvg_top
@@ -94,7 +96,7 @@ def detect_fvgs(
         raise InsufficientDataError(
             required=3,
             got=len(df),
-            context="FVG detection requires at least 3 candles. Use a longer period."
+            context="FVG detection requires at least 3 candles. Use a longer period.",
         )
 
     fvgs = []
@@ -102,7 +104,7 @@ def detect_fvgs(
     # Slide a window of 3 candles across the entire dataset
     # i = candle 1, i+1 = candle 2 (the impulse), i+2 = candle 3
     for i in range(len(df) - 2):
-        c1 = df.iloc[i]      # candle before impulse
+        c1 = df.iloc[i]  # candle before impulse
         c2 = df.iloc[i + 1]  # impulse candle (big move)
         c3 = df.iloc[i + 2]  # candle after impulse
 
@@ -114,31 +116,30 @@ def detect_fvgs(
         # Gap exists between top of C1 and bottom of C3
         if c1["high"] < c3["low"]:
             gap_bottom = format_number(c1["high"])
-            gap_top    = format_number(c3["low"])
-            gap_size   = format_number(c3["low"] - c1["high"])
+            gap_top = format_number(c3["low"])
+            gap_size = format_number(c3["low"] - c1["high"])
 
             if gap_size < min_gap_size:
                 continue
 
             fvg = {
-                "type":        "bullish",
-                "candle_1":    c1_date,
-                "candle_2":    c2_date,  # the impulse candle
-                "candle_3":    c3_date,
-                "gap_bottom":  gap_bottom,
-                "gap_top":     gap_top,
-                "gap_size":    gap_size,
+                "type": "bullish",
+                "candle_1": c1_date,
+                "candle_2": c2_date,  # the impulse candle
+                "candle_3": c3_date,
+                "gap_bottom": gap_bottom,
+                "gap_top": gap_top,
+                "gap_size": gap_size,
                 "gap_size_pct": format_number(gap_size / c1["close"] * 100),
-                "strength":    _classify_fvg_strength(gap_size, atr=None),
-                "filled":      _check_if_filled(
-                    {"type": "bullish", "gap_top": gap_top},
-                    df, i + 2
+                "strength": _classify_fvg_strength(gap_size, atr=None),
+                "filled": _check_if_filled(
+                    {"type": "bullish", "gap_top": gap_top}, df, i + 2
                 ),
                 "impulse_candle": {
-                    "open":  format_number(c2["open"]),
+                    "open": format_number(c2["open"]),
                     "close": format_number(c2["close"]),
-                    "size":  format_number(abs(c2["close"] - c2["open"])),
-                }
+                    "size": format_number(abs(c2["close"] - c2["open"])),
+                },
             }
             fvgs.append(fvg)
 
@@ -146,31 +147,30 @@ def detect_fvgs(
         # Gap exists between bottom of C1 and top of C3
         elif c1["low"] > c3["high"]:
             gap_bottom = format_number(c3["high"])
-            gap_top    = format_number(c1["low"])
-            gap_size   = format_number(c1["low"] - c3["high"])
+            gap_top = format_number(c1["low"])
+            gap_size = format_number(c1["low"] - c3["high"])
 
             if gap_size < min_gap_size:
                 continue
 
             fvg = {
-                "type":        "bearish",
-                "candle_1":    c1_date,
-                "candle_2":    c2_date,
-                "candle_3":    c3_date,
-                "gap_bottom":  gap_bottom,
-                "gap_top":     gap_top,
-                "gap_size":    gap_size,
+                "type": "bearish",
+                "candle_1": c1_date,
+                "candle_2": c2_date,
+                "candle_3": c3_date,
+                "gap_bottom": gap_bottom,
+                "gap_top": gap_top,
+                "gap_size": gap_size,
                 "gap_size_pct": format_number(gap_size / c1["close"] * 100),
-                "strength":    _classify_fvg_strength(gap_size, atr=None),
-                "filled":      _check_if_filled(
-                    {"type": "bearish", "gap_bottom": gap_bottom},
-                    df, i + 2
+                "strength": _classify_fvg_strength(gap_size, atr=None),
+                "filled": _check_if_filled(
+                    {"type": "bearish", "gap_bottom": gap_bottom}, df, i + 2
                 ),
                 "impulse_candle": {
-                    "open":  format_number(c2["open"]),
+                    "open": format_number(c2["open"]),
                     "close": format_number(c2["close"]),
-                    "size":  format_number(abs(c2["close"] - c2["open"])),
-                }
+                    "size": format_number(abs(c2["close"] - c2["open"])),
+                },
             }
             fvgs.append(fvg)
 
@@ -184,8 +184,8 @@ def detect_fvgs(
     # ── Summary stats ─────────────────────────────────────────────────────
     bullish_fvgs = [f for f in fvgs if f["type"] == "bullish"]
     bearish_fvgs = [f for f in fvgs if f["type"] == "bearish"]
-    open_fvgs    = [f for f in fvgs if not f["filled"]]
-    filled_fvgs  = [f for f in fvgs if f["filled"]]
+    open_fvgs = [f for f in fvgs if not f["filled"]]
+    filled_fvgs = [f for f in fvgs if f["filled"]]
 
     latest_price = market_data["summary"]["latest_close"]
 
@@ -194,27 +194,27 @@ def detect_fvgs(
     if open_fvgs:
         nearest_open = min(
             open_fvgs,
-            key=lambda f: abs((f["gap_top"] + f["gap_bottom"]) / 2 - latest_price)
+            key=lambda f: abs((f["gap_top"] + f["gap_bottom"]) / 2 - latest_price),
         )
 
     result = {
-        "symbol":       symbol,
-        "name":         market_data["name"],
-        "period":       period,
-        "interval":     interval,
+        "symbol": symbol,
+        "name": market_data["name"],
+        "period": period,
+        "interval": interval,
         "latest_price": latest_price,
         "summary": {
-            "total_fvgs":   len(fvgs),
-            "bullish":      len(bullish_fvgs),
-            "bearish":      len(bearish_fvgs),
-            "open":         len(open_fvgs),
-            "filled":       len(filled_fvgs),
+            "total_fvgs": len(fvgs),
+            "bullish": len(bullish_fvgs),
+            "bearish": len(bearish_fvgs),
+            "open": len(open_fvgs),
+            "filled": len(filled_fvgs),
             "fill_rate_pct": format_number(
                 len(filled_fvgs) / len(fvgs) * 100 if fvgs else 0
             ),
         },
         "nearest_open_fvg": nearest_open,
-        "fvgs":         fvgs,
+        "fvgs": fvgs,
     }
 
     # Cache the result for 10 minutes

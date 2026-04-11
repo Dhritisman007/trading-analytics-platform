@@ -1,6 +1,7 @@
 # routers/cache.py
 
 from fastapi import APIRouter
+
 from core.cache import cache
 
 router = APIRouter(prefix="/cache", tags=["Admin"])

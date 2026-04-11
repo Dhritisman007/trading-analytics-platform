@@ -1,7 +1,7 @@
 # core/cache.py
 
-import time
 import logging
+import time
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class TTLCache:
         """Store a value with an expiry time."""
         expires_at = time.time() + ttl_seconds
         self._store[key] = {
-            "value":      value,
+            "value": value,
             "expires_at": expires_at,
         }
         logger.debug(f"Cache SET: {key} (TTL={ttl_seconds}s)")
@@ -69,14 +69,13 @@ class TTLCache:
         Shows how many entries are live vs expired.
         """
         now = time.time()
-        live    = sum(1 for e in self._store.values() if e["expires_at"] > now)
+        live = sum(1 for e in self._store.values() if e["expires_at"] > now)
         expired = len(self._store) - live
         return {
             "total_entries": len(self._store),
-            "live":          live,
-            "expired":       expired,
-            "keys":          [k for k, e in self._store.items()
-                              if e["expires_at"] > now],
+            "live": live,
+            "expired": expired,
+            "keys": [k for k, e in self._store.items() if e["expires_at"] > now],
         }
 
 

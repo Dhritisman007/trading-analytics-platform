@@ -1,12 +1,14 @@
 # services/indicator_calculator.py
 
+import logging
+
 import pandas as pd
 import ta
-import logging
-from services.market_service import fetch_market_data
-from core.exceptions import InvalidParameterError, InsufficientDataError
-from utils.formatters import format_number
+
 from core.cache import cache
+from core.exceptions import InsufficientDataError, InvalidParameterError
+from services.market_service import fetch_market_data
+from utils.formatters import format_number
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +17,7 @@ logger = logging.getLogger(__name__)
 # We drop rows before this threshold so the frontend never sees NaN.
 WARMUP = {
     "rsi": 14,
-    "ema_slow": 26,   # MACD needs 26-period EMA — this is the bottleneck
+    "ema_slow": 26,  # MACD needs 26-period EMA — this is the bottleneck
     "atr": 14,
 }
 MIN_CANDLES_REQUIRED = max(WARMUP.values()) + 10  # buffer of 10 extra candles
@@ -25,21 +27,15 @@ def _validate_windows(rsi_window: int, ema_window: int, atr_window: int):
     """Catch bad window values before they cause confusing errors downstream."""
     if not (2 <= rsi_window <= 50):
         raise InvalidParameterError(
-            param="rsi_window",
-            value=rsi_window,
-            reason="Must be between 2 and 50"
+            param="rsi_window", value=rsi_window, reason="Must be between 2 and 50"
         )
     if not (2 <= ema_window <= 200):
         raise InvalidParameterError(
-            param="ema_window",
-            value=ema_window,
-            reason="Must be between 2 and 200"
+            param="ema_window", value=ema_window, reason="Must be between 2 and 200"
         )
     if not (2 <= atr_window <= 50):
         raise InvalidParameterError(
-            param="atr_window",
-            value=atr_window,
-            reason="Must be between 2 and 50"
+            param="atr_window", value=atr_window, reason="Must be between 2 and 50"
         )
 
 
@@ -67,8 +63,8 @@ def calculate_macd(close: pd.Series) -> dict[str, pd.Series]:
     """
     macd_obj = ta.trend.MACD(close=close)
     return {
-        "macd":      macd_obj.macd(),
-        "signal":    macd_obj.macd_signal(),
+        "macd": macd_obj.macd(),
+        "signal": macd_obj.macd_signal(),
         "histogram": macd_obj.macd_diff(),
     }
 
@@ -117,15 +113,15 @@ def _get_latest_signals(df: pd.DataFrame) -> dict:
     price_vs_ema = "above" if last["Close"] > last["EMA"] else "below"
 
     return {
-        "rsi_value":     format_number(last["RSI"]),
-        "rsi_signal":    _interpret_rsi(float(last["RSI"])),
-        "ema_value":     format_number(last["EMA"]),
-        "price_vs_ema":  price_vs_ema,
-        "macd_value":    format_number(last["MACD"]),
-        "macd_signal":   format_number(last["MACD_Signal"]),
+        "rsi_value": format_number(last["RSI"]),
+        "rsi_signal": _interpret_rsi(float(last["RSI"])),
+        "ema_value": format_number(last["EMA"]),
+        "price_vs_ema": price_vs_ema,
+        "macd_value": format_number(last["MACD"]),
+        "macd_signal": format_number(last["MACD_Signal"]),
         "macd_crossover": macd_crossover,
-        "atr_value":     format_number(last["ATR"]),
-        "atr_pct":       format_number(last["ATR"] / last["Close"] * 100),
+        "atr_value": format_number(last["ATR"]),
+        "atr_pct": format_number(last["ATR"] / last["Close"] * 100),
     }
 
 
@@ -161,61 +157,71 @@ def get_indicators(
     df.set_index("date", inplace=True)
 
     # Rename to match ta library's expected column names
-    df.rename(columns={
-        "open": "Open", "high": "High",
-        "low": "Low",  "close": "Close", "volume": "Volume"
-    }, inplace=True)
+    df.rename(
+        columns={
+            "open": "Open",
+            "high": "High",
+            "low": "Low",
+            "close": "Close",
+            "volume": "Volume",
+        },
+        inplace=True,
+    )
 
     if len(df) < MIN_CANDLES_REQUIRED:
         raise InsufficientDataError(
             required=MIN_CANDLES_REQUIRED,
             got=len(df),
-            context="Try period=3mo or longer"
+            context="Try period=3mo or longer",
         )
 
     # ── Calculate indicators ──────────────────────────────────────────────────
-    df["RSI"]            = calculate_rsi(df["Close"], window=rsi_window)
-    df["EMA"]            = calculate_ema(df["Close"], window=ema_window)
-    df["ATR"]            = calculate_atr(df["High"], df["Low"], df["Close"], window=atr_window)
+    df["RSI"] = calculate_rsi(df["Close"], window=rsi_window)
+    df["EMA"] = calculate_ema(df["Close"], window=ema_window)
+    df["ATR"] = calculate_atr(df["High"], df["Low"], df["Close"], window=atr_window)
 
-    macd_data            = calculate_macd(df["Close"])
-    df["MACD"]           = macd_data["macd"]
-    df["MACD_Signal"]    = macd_data["signal"]
+    macd_data = calculate_macd(df["Close"])
+    df["MACD"] = macd_data["macd"]
+    df["MACD_Signal"] = macd_data["signal"]
     df["MACD_Histogram"] = macd_data["histogram"]
 
     # Drop warm-up rows where indicators are still NaN
     df.dropna(inplace=True)
 
     if df.empty:
-        raise ValueError("All rows were NaN after indicator calculation. Try a longer period.")
+        raise ValueError(
+            "All rows were NaN after indicator calculation. Try a longer period."
+        )
 
     # ── Build response ────────────────────────────────────────────────────────
     rows = []
     for date, row in df.iterrows():
-        rows.append({
-            "date":           str(date.date()),
-            "open":           format_number(row["Open"]),
-            "high":           format_number(row["High"]),
-            "low":            format_number(row["Low"]),
-            "close":          format_number(row["Close"]),
-            "volume":         int(row["Volume"]),
-            "rsi":            format_number(row["RSI"]),
-            "ema":            format_number(row["EMA"]),
-            "atr":            format_number(row["ATR"]),
-            "macd":           format_number(row["MACD"]),
-            "macd_signal":    format_number(row["MACD_Signal"]),
-            "macd_histogram": format_number(row["MACD_Histogram"]),
-        })
+        rows.append(
+            {
+                "date": str(date.date()),
+                "open": format_number(row["Open"]),
+                "high": format_number(row["High"]),
+                "low": format_number(row["Low"]),
+                "close": format_number(row["Close"]),
+                "volume": int(row["Volume"]),
+                "rsi": format_number(row["RSI"]),
+                "ema": format_number(row["EMA"]),
+                "atr": format_number(row["ATR"]),
+                "macd": format_number(row["MACD"]),
+                "macd_signal": format_number(row["MACD_Signal"]),
+                "macd_histogram": format_number(row["MACD_Histogram"]),
+            }
+        )
 
     result = {
-        "symbol":     symbol,
-        "name":       market_data["name"],
-        "period":     period,
-        "interval":   interval,
-        "windows":    {"rsi": rsi_window, "ema": ema_window, "atr": atr_window},
-        "count":      len(rows),
-        "latest":     _get_latest_signals(df),  # snapshot for dashboard header
-        "data":       rows,
+        "symbol": symbol,
+        "name": market_data["name"],
+        "period": period,
+        "interval": interval,
+        "windows": {"rsi": rsi_window, "ema": ema_window, "atr": atr_window},
+        "count": len(rows),
+        "latest": _get_latest_signals(df),  # snapshot for dashboard header
+        "data": rows,
     }
 
     # Cache the result for 5 minutes

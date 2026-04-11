@@ -1,6 +1,7 @@
 # routers/indicators.py
 
 from fastapi import APIRouter, Query
+
 from services.indicator_calculator import get_indicators
 
 router = APIRouter(prefix="/indicators", tags=["Technical Indicators"])
@@ -9,28 +10,23 @@ router = APIRouter(prefix="/indicators", tags=["Technical Indicators"])
 @router.get("/")
 def get_indicator_data(
     symbol: str = Query(
-        default="^NSEI",
-        description="^NSEI for Nifty 50, ^BSESN for Sensex"
+        default="^NSEI", description="^NSEI for Nifty 50, ^BSESN for Sensex"
     ),
-    period: str = Query(
-        default="3mo",
-        description="Data period: 1mo, 3mo, 6mo, 1y"
-    ),
+    period: str = Query(default="3mo", description="Data period: 1mo, 3mo, 6mo, 1y"),
     interval: str = Query(
-        default="1d",
-        description="Candle interval: 1d (daily), 1wk (weekly)"
+        default="1d", description="Candle interval: 1d (daily), 1wk (weekly)"
     ),
     rsi_window: int = Query(
-        default=14, ge=2, le=50,
-        description="RSI period (default 14)"
+        default=14, ge=2, le=50, description="RSI period (default 14)"
     ),
     ema_window: int = Query(
-        default=20, ge=2, le=200,
-        description="EMA period (default 20, try 50 or 200 for long-term)"
+        default=20,
+        ge=2,
+        le=200,
+        description="EMA period (default 20, try 50 or 200 for long-term)",
     ),
     atr_window: int = Query(
-        default=14, ge=2, le=50,
-        description="ATR period (default 14)"
+        default=14, ge=2, le=50, description="ATR period (default 14)"
     ),
 ):
     """
@@ -60,8 +56,8 @@ def get_latest_signals(
     """
     result = get_indicators(symbol=symbol, period=period)
     return {
-        "symbol":  result["symbol"],
-        "name":    result["name"],
-        "latest":  result["latest"],
+        "symbol": result["symbol"],
+        "name": result["name"],
+        "latest": result["latest"],
         "windows": result["windows"],
     }
