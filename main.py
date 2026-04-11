@@ -21,6 +21,7 @@ from routers import indicators
 from routers import live
 from routers import market
 from routers import predict
+from routers import risk
 from services.websocket_manager import start_websocket_feed
 from services.websocket_manager import stop_websocket_feed
 
@@ -74,6 +75,7 @@ app.include_router(auth_upstox.router)
 app.include_router(live.router)
 app.include_router(cache.router)
 app.include_router(predict.router)
+app.include_router(risk.router)
 
 
 @app.get("/", tags=["Health"])

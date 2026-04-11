@@ -18,10 +18,6 @@ A **FastAPI-based trading analytics platform** with:
 
 ---
 
-## Architecture
-
-### Core Components
-
 ```
 Trading Analytics Platform
 │
