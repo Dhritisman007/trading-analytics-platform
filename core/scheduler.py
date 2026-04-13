@@ -3,6 +3,7 @@
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 
 logger = logging.getLogger(__name__)
 
@@ -139,3 +140,25 @@ def get_scheduler_status() -> dict:
             "next_run": str(job.next_run_time) if job.next_run_time else None,
         })
     return {"running": True, "jobs": jobs}
+# Add this function to core/scheduler.py
+
+def _refresh_fii_dii():
+    """Refresh FII/DII data once per day after market close."""
+    from services.fii_dii.fii_dii_service import refresh_fii_dii
+    try:
+        result = refresh_fii_dii()
+        logger.info(f"Refreshed FII/DII: {result.get('days_fetched')} days")
+    except Exception as e:
+        logger.error(f"Failed to refresh FII/DII: {e}")
+
+
+# Add inside start_scheduler() — after existing jobs:
+from apscheduler.triggers.cron import CronTrigger
+
+scheduler.add_job(
+    _refresh_fii_dii,
+    trigger=CronTrigger(hour=16, minute=30, timezone="Asia/Kolkata"),
+    id="refresh_fii_dii",
+    name="Refresh FII/DII data",
+    replace_existing=True,
+)

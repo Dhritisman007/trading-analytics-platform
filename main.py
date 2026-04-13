@@ -12,7 +12,7 @@ from core.error_handlers import register_error_handlers
 from core.logging_config import setup_logging
 from core.middleware import RequestLoggingMiddleware
 from core.scheduler import get_scheduler_status, start_scheduler, stop_scheduler
-from routers import auth_upstox, backtest, cache, fvg, indicators, live, market, news, predict, risk
+from routers import auth_upstox, backtest, cache, fii_dii, fvg, indicators, live, market, news, predict, risk
 from services.websocket_manager import is_connected, start_websocket_feed, stop_websocket_feed
 
 # Set up logging first — before anything else
@@ -71,6 +71,7 @@ app.include_router(risk.router)         # /risk/
 app.include_router(backtest.router)     # /backtest/
 app.include_router(cache.router)        # /cache/
 app.include_router(news.router)         # /news/
+app.include_router(fii_dii.router)      # /fii-dii/
 app.include_router(live.router)         # /live/
 app.include_router(auth_upstox.router)  # /auth/upstox/
 
@@ -96,4 +97,5 @@ def health():
         "ws_connected":  is_connected(),
         "cache":         get_cache_stats(),
         "scheduler":     get_scheduler_status(),
-    }
+    }# Add router
+app.include_router(fii_dii.router)   # /fii-dii/
