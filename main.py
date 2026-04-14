@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.cache import get_cache_stats
 from core.config import settings
+from core.database import init_db
 from core.error_handlers import register_error_handlers
 from core.logging_config import setup_logging
 from core.middleware import RequestLoggingMiddleware
@@ -24,6 +25,14 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     # ── Startup ───────────────────────────────────────────────────────────
     logger.info(f"Starting {settings.app_name} v0.12.0")
+    
+    # Initialize database tables on startup
+    try:
+        init_db()
+        logger.info("Database tables initialized successfully")
+    except Exception as e:
+        logger.warning(f"Database initialization warning: {e}")
+    
     start_scheduler()
 
     if settings.upstox_access_token:
@@ -92,10 +101,9 @@ def root():
 @app.get("/health", tags=["Health"])
 def health():
     return {
-        "status":        "healthy",
-        "data_provider": settings.data_provider,
-        "ws_connected":  is_connected(),
-        "cache":         get_cache_stats(),
-        "scheduler":     get_scheduler_status(),
-    }# Add router
-app.include_router(fii_dii.router)   # /fii-dii/
+    "status":        "healthy",
+    "data_provider": settings.data_provider,
+    "ws_connected":  is_connected(),
+    "cache":         get_cache_stats(),
+    "scheduler":     get_scheduler_status(),
+    }

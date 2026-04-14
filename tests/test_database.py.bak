@@ -1,0 +1,285 @@
+# tests/test_database.py
+
+import pytest
+from datetime import date, datetime, timezone
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from core.database import Base
+from models.trade import (
+    Trade,
+    Prediction,
+    BacktestResult,
+    NewsArticle,
+    FiidiiFlow,
+    UserPreference,
+)
+from repositories import (
+    trade_repository,
+    news_repository,
+    fiidii_repository,
+    user_repository,
+)
+
+# Use in-memory SQLite for tests — fast and no setup needed
+TEST_DB_URL = "sqlite:///:memory:"
+
+
+@pytest.fixture(scope="module")
+def test_engine():
+    engine = create_engine(
+        TEST_DB_URL,
+        connect_args={"check_same_thread": False},
+    )
+    Base.metadata.create_all(engine)
+    yield engine
+    Base.metadata.drop_all(engine)
+
+
+@pytest.fixture
+def db(test_engine):
+    """Fresh session for each test."""
+    Session = sessionmaker(bind=test_engine)
+    session = Session()
+    yield session
+    session.rollback()
+    session.close()
+
+
+# ── Model tests ───────────────────────────────────────────────────────────────
+
+class TestModels:
+
+    def test_market_data_model_creates(self, db):
+        record = MarketDataRecord(
+            symbol="^NSEI",
+            date=date(2024, 1, 15),
+            open=22000.0,
+            high=22200.0,
+            low=21900.0,
+            close=22100.0,
+            volume=1000000,
+        )
+        db.add(record)
+        db.commit()
+        assert record.id is not None
+
+    def test_prediction_model_creates(self, db):
+        record = PredictionRecord(
+            symbol="^NSEI",
+            signal="BUY",
+            confidence=65.5,
+            price_at_prediction=22100.0,
+        )
+        db.add(record)
+        db.commit()
+        assert record.id is not None
+        assert record.correct is None  # not yet evaluated
+
+    def test_backtest_model_creates(self, db):
+        record = BacktestRecord(
+            strategy="rsi",
+            symbol="^NSEI",
+            period="2y",
+            initial_capital=100000,
+            final_value=115000,
+            total_return_pct=15.0,
+            grade="B",
+        )
+        db.add(record)
+        db.commit()
+        assert record.id is not None
+
+    def test_news_model_creates(self, db):
+        record = NewsRecord(
+            title="Nifty hits all-time high",
+            source="Economic Times",
+            sentiment_score=0.72,
+            sentiment_label="positive",
+        )
+        db.add(record)
+        db.commit()
+        assert record.id is not None
+
+    def test_fii_dii_model_creates(self, db):
+        record = FiiDiiRecord(
+            date=date(2024, 1, 15),
+            fii_buy=4000.0,
+            fii_sell=2500.0,
+            fii_net=1500.0,
+            dii_buy=2000.0,
+            dii_sell=1500.0,
+            dii_net=500.0,
+            combined_net=2000.0,
+        )
+        db.add(record)
+        db.commit()
+        assert record.id is not None
+
+
+# ── Market repository tests ───────────────────────────────────────────────────
+
+class TestMarketRepository:
+
+    def _sample_candles(self):
+        return [
+            {
+                "date": "2024-01-15",
+                "open": 22000.0, "high": 22200.0,
+                "low": 21900.0,  "close": 22100.0,
+                "volume": 1000000,
+            },
+            {
+                "date": "2024-01-16",
+                "open": 22100.0, "high": 22400.0,
+                "low": 22000.0,  "close": 22350.0,
+                "volume": 1200000,
+            },
+        ]
+
+    def test_save_ohlc_returns_count(self, db):
+        result = MarketRepository.save_ohlc(db, "^NSEI", self._sample_candles())
+        assert result == 2
+
+    def test_save_ohlc_no_duplicates(self, db):
+        MarketRepository.save_ohlc(db, "^NSEI", self._sample_candles())
+        result = MarketRepository.save_ohlc(db, "^NSEI", self._sample_candles())
+        assert result == 0  # already exists
+
+    def test_get_latest_returns_records(self, db):
+        MarketRepository.save_ohlc(db, "^NSEI", self._sample_candles())
+        records = MarketRepository.get_latest(db, "^NSEI", limit=10)
+        assert len(records) >= 2
+
+
+# ── Prediction repository tests ───────────────────────────────────────────────
+
+class TestPredictionRepository:
+
+    def test_save_prediction(self, db):
+        record = PredictionRepository.save(
+            db, "^NSEI", "BUY", 65.5, 22100.0
+        )
+        assert record.id is not None
+        assert record.signal == "BUY"
+
+    def test_get_history(self, db):
+        PredictionRepository.save(db, "^NSEI", "BUY", 65.5, 22100.0)
+        history = PredictionRepository.get_history(db, "^NSEI")
+        assert len(history) >= 1
+
+    def test_update_outcome(self, db):
+        record = PredictionRepository.save(
+            db, "^NSEI", "BUY", 65.5, 22100.0
+        )
+        updated = PredictionRepository.update_outcome(
+            db, record.id, 22500.0, "up", True
+        )
+        assert updated.correct is True
+        assert updated.outcome_price == 22500.0
+
+    def test_get_accuracy_no_data(self, db):
+        result = PredictionRepository.get_accuracy(db, "^FAKE")
+        assert result["evaluated"] == 0
+        assert result["accuracy"] is None
+
+
+# ── Backtest repository tests ─────────────────────────────────────────────────
+
+class TestBacktestRepository:
+
+    def _sample_result(self):
+        return {
+            "performance": {
+                "initial_capital": 100000,
+                "final_value": 115000,
+                "total_return_pct": 15.0,
+                "sharpe_ratio": 1.2,
+                "max_drawdown_pct": 8.5,
+                "win_rate_pct": 55.0,
+                "profit_factor": 1.4,
+            },
+            "vs_buy_hold": {
+                "buy_hold_return_pct": 12.0,
+                "alpha": 3.0,
+            },
+            "grade": {"grade": "B"},
+            "total_trades": 22,
+        }
+
+    def test_save_backtest(self, db):
+        record = BacktestRepository.save(
+            db, "rsi", "^NSEI", "2y", self._sample_result()
+        )
+        assert record.id is not None
+        assert record.grade == "B"
+
+    def test_get_history(self, db):
+        BacktestRepository.save(db, "rsi", "^NSEI", "2y", self._sample_result())
+        history = BacktestRepository.get_history(db, symbol="^NSEI")
+        assert len(history) >= 1
+
+    def test_get_best(self, db):
+        BacktestRepository.save(db, "rsi",      "^NSEI", "2y", self._sample_result())
+        BacktestRepository.save(db, "ema_cross", "^NSEI", "2y", self._sample_result())
+        best = BacktestRepository.get_best(db, "^NSEI")
+        assert best is not None
+
+
+# ── News repository tests ─────────────────────────────────────────────────────
+
+class TestNewsRepository:
+
+    def _sample_articles(self):
+        return [
+            {
+                "title":        "Nifty hits record",
+                "summary":      "Markets rally...",
+                "url":          "https://example.com/1",
+                "source":       "ET",
+                "published_at": "2024-01-15T10:00:00+00:00",
+                "sentiment":    {"compound": 0.7, "label": "positive"},
+                "impact":       {"impact": "HIGH"},
+                "topics":       ["general"],
+                "keywords":     ["nifty"],
+                "is_breaking":  True,
+            },
+        ]
+
+    def test_save_articles(self, db):
+        result = NewsRepository.save_articles(db, self._sample_articles())
+        assert result == 1
+
+    def test_no_duplicate_urls(self, db):
+        NewsRepository.save_articles(db, self._sample_articles())
+        result = NewsRepository.save_articles(db, self._sample_articles())
+        assert result == 0
+
+
+# ── FII/DII repository tests ──────────────────────────────────────────────────
+
+class TestFiiDiiRepository:
+
+    def _sample_flows(self):
+        return [
+            {
+                "date":         "2024-01-15",
+                "fii":          {"gross_buy": 4000, "gross_sell": 2500, "net": 1500, "action": "buy"},
+                "dii":          {"gross_buy": 2000, "gross_sell": 1500, "net": 500,  "action": "buy"},
+                "combined_net": 2000,
+            }
+        ]
+
+    def test_save_flows(self, db):
+        result = FiiDiiRepository.save_flows(db, self._sample_flows())
+        assert result == 1
+
+    def test_no_duplicate_dates(self, db):
+        FiiDiiRepository.save_flows(db, self._sample_flows())
+        result = FiiDiiRepository.save_flows(db, self._sample_flows())
+        assert result == 0
+
+    def test_get_history(self, db):
+        FiiDiiRepository.save_flows(db, self._sample_flows())
+        records = FiiDiiRepository.get_history(db, days=10)
+        assert len(records) >= 1
