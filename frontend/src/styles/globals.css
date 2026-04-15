@@ -1,0 +1,153 @@
+/* src/styles/globals.css */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CSS Variables - Theme Configuration
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Colors - Primary */
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-text-tertiary: #999999;
+
+  /* Colors - Background */
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f9f9f9;
+  --color-background-tertiary: #f5f5f3;
+
+  /* Colors - Borders */
+  --color-border-primary: #e0e0e0;
+  --color-border-secondary: rgba(0, 0, 0, 0.1);
+  --color-border-tertiary: rgba(0, 0, 0, 0.05);
+
+  /* Colors - Status */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+
+  /* Colors - Grade Colors */
+  --color-grade-a: #22c55e;
+  --color-grade-b: #3b82f6;
+  --color-grade-c: #eab308;
+  --color-grade-d: #f97316;
+  --color-grade-f: #ef4444;
+
+  /* Colors - Signal Colors */
+  --color-signal-buy: #22c55e;
+  --color-signal-sell: #ef4444;
+  --color-signal-hold: #f59e0b;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* Border Radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 15px;
+  --font-size-xl: 16px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* Transitions */
+  --transition-fast: 0.1s ease-in-out;
+  --transition-base: 0.2s ease-in-out;
+  --transition-slow: 0.3s ease-in-out;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Reset & Base Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  height: 100%;
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background: var(--color-background-tertiary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Element Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+a {
+  text-decoration: none;
+  color: var(--color-info);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Scrollbar
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-secondary);
+  border-radius: 3px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-primary);
+}
