@@ -26,6 +26,15 @@ client.interceptors.request.use(
 client.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    const status = error.response?.status
+
+    // 502 = backend not running — show clear message
+    if (status === 502 || status === 503 || !error.response) {
+      return Promise.reject(
+        new Error('Backend server is not running. Start uvicorn and retry.')
+      )
+    }
+
     const message =
       error.response?.data?.message ||
       error.response?.data?.detail ||

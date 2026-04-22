@@ -2,10 +2,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { indicatorsApi } from '../api/endpoints'
 
-export const useIndicators = (symbol = '^NSEI', period = '3mo') =>
+export const useIndicators = (symbol = '^NSEI', period = '3mo', rsiWindow = 14, emaWindow = 20) =>
   useQuery({
-    queryKey:  ['indicators', symbol, period],
-    queryFn:   () => indicatorsApi.getAll(symbol, period),
+    queryKey:  ['indicators', symbol, period, rsiWindow, emaWindow],
+    queryFn:   () => indicatorsApi.getAll(symbol, period, rsiWindow, emaWindow),
     staleTime: 5 * 60 * 1000,
     retry:     2,
   })

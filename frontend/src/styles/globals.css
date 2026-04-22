@@ -9,16 +9,19 @@
   --color-text-primary: #1a1a1a;
   --color-text-secondary: #666666;
   --color-text-tertiary: #999999;
+  --color-text-danger: #dc2626;
 
   /* Colors - Background */
   --color-background-primary: #ffffff;
   --color-background-secondary: #f9f9f9;
   --color-background-tertiary: #f5f5f3;
+  --color-background-danger: #fee2e2;
 
   /* Colors - Borders */
   --color-border-primary: #e0e0e0;
   --color-border-secondary: rgba(0, 0, 0, 0.1);
   --color-border-tertiary: rgba(0, 0, 0, 0.05);
+  --color-border-danger: #fca5a5;
 
   /* Colors - Status */
   --color-success: #22c55e;

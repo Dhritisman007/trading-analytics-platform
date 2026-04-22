@@ -1,0 +1,51 @@
+/* src/components/charts/MACDChart.css */
+
+.chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 1rem;
+}
+
+.chart--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+.chart__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-background-primary);
+}
+
+.chart__legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.chart__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart__legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.macd-chart {
+  overflow-x: auto;
+}

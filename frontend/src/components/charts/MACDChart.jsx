@@ -1,96 +1,122 @@
-/**
- * Component: MACDChart
- * MACD indicator chart
- */
+// src/components/charts/MACDChart.jsx
 
-import React from 'react';
-import './MACDChart.css';
+import { useEffect, useRef } from 'react'
+import { createChart, CrosshairMode, LineSeries, HistogramSeries } from 'lightweight-charts'
 
-export function MACDChart({ 
-  data = [],
-  height = 300,
-}) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="chart chart--empty" style={{ height }}>
-        <p>No MACD data available</p>
-      </div>
-    );
+export default function MACDChart({ data = [], height = 140 }) {
+  const containerRef = useRef(null)
+  const chartRef     = useRef(null)
+
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const colors = {
+    text:      isDark ? '#9c9a92' : '#5F5E5A',
+    grid:      isDark ? '#2C2C2A' : '#F1EFE8',
+    border:    isDark ? '#444441' : '#D3D1C7',
+    crosshair: isDark ? '#888780' : '#B4B2A9',
   }
 
-  const allValues = data.flatMap(d => [d.macd, d.signal, d.histogram]);
-  const minValue = Math.min(...allValues);
-  const maxValue = Math.max(...allValues);
-  const valueRange = maxValue - minValue;
+  useEffect(() => {
+    if (!containerRef.current || !data.length) return
 
-  const chartWidth = data.length * 10;
-  const chartHeight = height - 40;
-  const midline = chartHeight / 2;
+    const chart = createChart(containerRef.current, {
+      width:  containerRef.current.clientWidth,
+      height,
+      layout: {
+        background:  { color: 'transparent' },
+        textColor:   colors.text,
+        fontSize:    10,
+        fontFamily:  '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+      },
+      grid: {
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: { color: colors.crosshair, width: 1, style: 2 },
+        horzLine: { color: colors.crosshair, width: 1, style: 2 },
+      },
+      rightPriceScale: {
+        borderColor:  colors.border,
+        scaleMargins: { top: 0.1, bottom: 0.1 },
+      },
+      timeScale: {
+        borderColor:    colors.border,
+        timeVisible:    true,
+        secondsVisible: false,
+      },
+    })
 
-  const scaleValue = (value) => {
-    const normalized = (value - minValue) / valueRange;
-    return midline - (normalized - 0.5) * chartHeight;
-  };
+    // MACD histogram — coloured by positive/negative
+    const histogramSeries = chart.addSeries(HistogramSeries, {
+      priceLineVisible: false,
+      lastValueVisible: false,
+    })
 
-  return (
-    <div className="chart macd-chart" style={{ height }}>
-      <svg width={chartWidth} height={chartHeight} className="chart__svg">
-        {/* Zero line */}
-        <line x1="0" y1={midline} x2={chartWidth} y2={midline} stroke="#999" strokeDasharray="4" />
+    // MACD line
+    const macdSeries = chart.addSeries(LineSeries, {
+      color:            '#BA7517',
+      lineWidth:        1.5,
+      priceLineVisible: false,
+      lastValueVisible: true,
+    })
 
-        {/* Histogram bars */}
-        {data.map((d, i) => {
-          const x = i * 10;
-          const y = scaleValue(d.histogram);
-          const barHeight = Math.abs(y - midline);
-          const color = d.histogram >= 0 ? '#22c55e' : '#ef4444';
+    // Signal line
+    const signalSeries = chart.addSeries(LineSeries, {
+      color:            '#E24B4A',
+      lineWidth:        1.5,
+      priceLineVisible: false,
+      lastValueVisible: true,
+    })
 
-          return (
-            <rect
-              key={`histogram-${i}`}
-              x={x - 2}
-              y={Math.min(y, midline)}
-              width="4"
-              height={barHeight}
-              fill={color}
-              opacity="0.3"
-            />
-          );
-        })}
+    const histData = data
+      .filter((d) => d.macd_histogram != null)
+      .map((d) => ({
+        time:  d.date,
+        value: d.macd_histogram,
+        color: d.macd_histogram >= 0 ? '#1D9E7580' : '#E24B4A80',
+      }))
 
-        {/* MACD line */}
-        {data.length > 1 && (
-          <polyline
-            points={data.map((d, i) => `${i * 10},${scaleValue(d.macd)}`).join(' ')}
-            fill="none"
-            stroke="#3b82f6"
-            strokeWidth="2"
-          />
-        )}
+    const macdData = data
+      .filter((d) => d.macd != null)
+      .map((d) => ({ time: d.date, value: d.macd }))
 
-        {/* Signal line */}
-        {data.length > 1 && (
-          <polyline
-            points={data.map((d, i) => `${i * 10},${scaleValue(d.signal)}`).join(' ')}
-            fill="none"
-            stroke="#f59e0b"
-            strokeWidth="2"
-            strokeDasharray="4"
-          />
-        )}
-      </svg>
+    const signalData = data
+      .filter((d) => d.macd_signal != null)
+      .map((d) => ({ time: d.date, value: d.macd_signal }))
 
-      {/* Legend */}
-      <div className="chart__legend">
-        <div className="chart__legend-item">
-          <div className="chart__legend-color" style={{ backgroundColor: '#3b82f6' }}></div>
-          <span>MACD</span>
-        </div>
-        <div className="chart__legend-item">
-          <div className="chart__legend-color" style={{ backgroundColor: '#f59e0b' }}></div>
-          <span>Signal</span>
-        </div>
-      </div>
+    histogramSeries.setData(histData)
+    macdSeries.setData(macdData)
+    signalSeries.setData(signalData)
+
+    chart.timeScale().fitContent()
+    chartRef.current = chart
+
+    const handleResize = () => {
+      if (containerRef.current) {
+        chart.applyOptions({ width: containerRef.current.clientWidth })
+      }
+    }
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      chart.remove()
+    }
+  }, [data, height])
+
+  if (!data.length) return (
+    <div style={{
+      height,
+      display:        'flex',
+      alignItems:     'center',
+      justifyContent: 'center',
+      color:          'var(--color-text-tertiary)',
+      fontSize:       '12px',
+    }}>
+      No MACD data
     </div>
-  );
+  )
+
+  return <div ref={containerRef} style={{ width: '100%', height }} />
 }

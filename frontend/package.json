@@ -10,13 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.51.16",
+    "axios": "^1.7.4",
+    "date-fns": "^4.1.0",
+    "lightweight-charts": "^5.1.0",
+    "lucide-react": "^0.416.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^6.24.2",
-    "@tanstack/react-query": "^5.51.16",
-    "lucide-react": "^0.416.0",
-    "recharts": "^2.12.7",
-    "axios": "^1.7.4"
+    "recharts": "^2.12.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

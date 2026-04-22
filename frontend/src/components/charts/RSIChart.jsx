@@ -1,71 +1,127 @@
-/**
- * Component: RSIChart
- * RSI technical indicator chart
- */
+// src/components/charts/RSIChart.jsx
 
-import React from 'react';
-import './RSIChart.css';
+import { useEffect, useRef } from 'react'
+import { createChart, CrosshairMode, LineSeries } from 'lightweight-charts'
 
-export function RSIChart({ 
-  data = [],
-  height = 300,
-}) {
-  if (!data || data.length === 0) {
-    return (
-      <div className="chart chart--empty" style={{ height }}>
-        <p>No RSI data available</p>
-      </div>
-    );
+export default function RSIChart({ data = [], height = 140 }) {
+  const containerRef = useRef(null)
+  const chartRef     = useRef(null)
+
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const colors = {
+    text:      isDark ? '#9c9a92' : '#5F5E5A',
+    grid:      isDark ? '#2C2C2A' : '#F1EFE8',
+    border:    isDark ? '#444441' : '#D3D1C7',
+    crosshair: isDark ? '#888780' : '#B4B2A9',
   }
 
-  const chartWidth = data.length * 10;
-  const chartHeight = height - 40;
+  useEffect(() => {
+    if (!containerRef.current || !data.length) return
 
-  const scaleRSI = (rsi) => {
-    return chartHeight - (rsi / 100) * chartHeight;
-  };
+    const chart = createChart(containerRef.current, {
+      width:  containerRef.current.clientWidth,
+      height,
+      layout: {
+        background:  { color: 'transparent' },
+        textColor:   colors.text,
+        fontSize:    10,
+        fontFamily:  '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+      },
+      grid: {
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: { color: colors.crosshair, width: 1, style: 2 },
+        horzLine: { color: colors.crosshair, width: 1, style: 2 },
+      },
+      rightPriceScale: {
+        borderColor: colors.border,
+        scaleMargins: { top: 0.1, bottom: 0.1 },
+      },
+      timeScale: {
+        borderColor:    colors.border,
+        timeVisible:    true,
+        secondsVisible: false,
+      },
+    })
 
-  return (
-    <div className="chart rsi-chart" style={{ height }}>
-      <svg width={chartWidth} height={chartHeight} className="chart__svg">
-        {/* Background zones */}
-        <rect y="0" width={chartWidth} height={scaleRSI(70)} fill="#ffe5e5" opacity="0.3" />
-        <rect y={scaleRSI(70)} width={chartWidth} height={scaleRSI(30) - scaleRSI(70)} fill="#f0f0f0" opacity="0.3" />
-        <rect y={scaleRSI(30)} width={chartWidth} height={chartHeight - scaleRSI(30)} fill="#e5f5e5" opacity="0.3" />
+    // RSI line
+    const rsiSeries = chart.addSeries(LineSeries, {
+      color:            '#7F77DD',
+      lineWidth:        2,
+      priceLineVisible: false,
+      lastValueVisible: true,
+    })
 
-        {/* Overbought/Oversold lines */}
-        <line x1="0" y1={scaleRSI(70)} x2={chartWidth} y2={scaleRSI(70)} stroke="#ef4444" strokeDasharray="4" />
-        <line x1="0" y1={scaleRSI(30)} x2={chartWidth} y2={scaleRSI(30)} stroke="#22c55e" strokeDasharray="4" />
-        <line x1="0" y1={scaleRSI(50)} x2={chartWidth} y2={scaleRSI(50)} stroke="#999" strokeDasharray="4" opacity="0.5" />
+    // Overbought line (70)
+    const overboughtSeries = chart.addSeries(LineSeries, {
+      color:            '#E24B4A',
+      lineWidth:        1,
+      lineStyle:        2, // dashed
+      priceLineVisible: false,
+      lastValueVisible: false,
+    })
 
-        {/* RSI line */}
-        {data.length > 1 && (
-          <polyline
-            points={data.map((d, i) => `${i * 10},${scaleRSI(d.rsi)}`).join(' ')}
-            fill="none"
-            stroke="#3b82f6"
-            strokeWidth="2"
-          />
-        )}
+    // Oversold line (30)
+    const oversoldSeries = chart.addSeries(LineSeries, {
+      color:            '#1D9E75',
+      lineWidth:        1,
+      lineStyle:        2,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    })
 
-        {/* Data points */}
-        {data.map((d, i) => (
-          <circle
-            key={`rsi-${i}`}
-            cx={i * 10}
-            cy={scaleRSI(d.rsi)}
-            r="2"
-            fill="#3b82f6"
-          />
-        ))}
-      </svg>
+    // Midline (50)
+    const midSeries = chart.addSeries(LineSeries, {
+      color:            colors.border,
+      lineWidth:        1,
+      lineStyle:        3,
+      priceLineVisible: false,
+      lastValueVisible: false,
+    })
 
-      {/* Labels */}
-      <div className="chart__labels">
-        <div className="chart__label" style={{ left: '5px' }}>Overbought (70)</div>
-        <div className="chart__label" style={{ left: '5px', bottom: '30%' }}>Neutral (50)</div>
-        <div className="chart__label" style={{ left: '5px', bottom: '5px' }}>Oversold (30)</div>
-      </div>
+    const rsiData    = data.filter((d) => d.rsi != null).map((d) => ({ time: d.date, value: d.rsi }))
+    const firstTime  = rsiData[0]?.time
+    const lastTime   = rsiData[rsiData.length - 1]?.time
+
+    rsiSeries.setData(rsiData)
+
+    if (firstTime && lastTime) {
+      overboughtSeries.setData([{ time: firstTime, value: 70 }, { time: lastTime, value: 70 }])
+      oversoldSeries.setData([  { time: firstTime, value: 30 }, { time: lastTime, value: 30 }])
+      midSeries.setData([       { time: firstTime, value: 50 }, { time: lastTime, value: 50 }])
+    }
+
+    chart.timeScale().fitContent()
+    chartRef.current = chart
+
+    const handleResize = () => {
+      if (containerRef.current) {
+        chart.applyOptions({ width: containerRef.current.clientWidth })
+      }
+    }
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      chart.remove()
+    }
+  }, [data, height])
+
+  if (!data.length) return (
+    <div style={{
+      height,
+      display:        'flex',
+      alignItems:     'center',
+      justifyContent: 'center',
+      color:          'var(--color-text-tertiary)',
+      fontSize:       '12px',
+    }}>
+      No RSI data
     </div>
-  );
+  )
+
+  return <div ref={containerRef} style={{ width: '100%', height }} />
 }
