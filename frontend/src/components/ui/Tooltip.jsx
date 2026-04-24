@@ -3,7 +3,7 @@
  * Hover tooltip display
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './Tooltip.css';
 
 export function Tooltip({ 
@@ -13,14 +13,14 @@ export function Tooltip({
   delay = 200,
 }) {
   const [visible, setVisible] = useState(false);
-  let timeoutId;
+  const timeoutId = useRef(null);
 
   const handleMouseEnter = () => {
-    timeoutId = setTimeout(() => setVisible(true), delay);
+    timeoutId.current = setTimeout(() => setVisible(true), delay);
   };
 
   const handleMouseLeave = () => {
-    clearTimeout(timeoutId);
+    clearTimeout(timeoutId.current);
     setVisible(false);
   };
 

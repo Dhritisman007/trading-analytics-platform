@@ -9,7 +9,7 @@ import { StatCard } from '../ui/StatCard';
 import { Badge } from '../ui/Badge';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { ErrorMessage } from '../ui/ErrorMessage';
-import { formatCurrency, formatPercentage } from '../../utils/formatters';
+import { formatCurrency, formatPercentage, formatNumber } from '../../utils/formatters';
 import './MarketPanel.css';
 
 export function MarketPanel({ data, loading, error, onRefresh }) {

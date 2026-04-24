@@ -47,14 +47,13 @@ export default function ExplanationTabs({ explanation }) {
 
       {/* Content */}
       <p style={{
-        fontSize:   '13px',
+        fontSize:   active === 'technical' ? '12px' : '13px',
         color:      'var(--color-text-secondary)',
         lineHeight: '1.7',
         margin:     0,
         fontFamily: active === 'technical'
           ? 'var(--font-mono)'
           : 'inherit',
-        fontSize: active === 'technical' ? '12px' : '13px',
       }}>
         {explanation[active] || '—'}
       </p>

@@ -1,6 +1,6 @@
 // src/components/panels/BacktestResultCard.jsx
 
-import { formatNumber, formatPrice } from '../../utils/formatters'
+import { formatNumber } from '../../utils/formatters'
 import EquityCurveChart from '../charts/EquityCurveChart'
 
 const MetricPill = ({ label, value, color }) => (

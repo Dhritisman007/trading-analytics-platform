@@ -28,7 +28,9 @@ export const useWebSocket = () => {
       wsRef.current.onclose = () => {
         setConnected(false)
         // Auto-reconnect after 5 seconds
-        reconnectRef.current = setTimeout(connect, 5000)
+        reconnectRef.current = setTimeout(() => {
+          connect()
+        }, 5000)
       }
 
       wsRef.current.onerror = () => {
