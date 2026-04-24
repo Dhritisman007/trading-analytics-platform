@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { BarChart2, TrendingUp, Brain, Shield, FlaskConical, Newspaper } from 'lucide-react'
+import { BarChart2, TrendingUp, Brain, Shield, FlaskConical, Newspaper, Building2 } from 'lucide-react'
 
 // Lazy load to catch import errors
 const Dashboard = lazy(() => import('./pages/Dashboard').catch(e => {
@@ -13,6 +13,7 @@ const Predict = lazy(() => import('./pages/Predict').catch(e => ({ default: () =
 const Risk = lazy(() => import('./pages/Risk').catch(e => ({ default: () => <div style={{ color: 'red' }}>Error: {e.message}</div> })))
 const Backtest = lazy(() => import('./pages/Backtest').catch(e => ({ default: () => <div style={{ color: 'red' }}>Error: {e.message}</div> })))
 const News = lazy(() => import('./pages/News').catch(e => ({ default: () => <div style={{ color: 'red' }}>Error: {e.message}</div> })))
+const FiiDii = lazy(() => import('./pages/FiiDii').catch(e => ({ default: () => <div style={{ color: 'red' }}>Error: {e.message}</div> })))
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { to: '/predict', icon: Brain, label: 'Predict' },
   { to: '/risk', icon: Shield, label: 'Risk' },
   { to: '/backtest', icon: FlaskConical, label: 'Backtest' },
+  { to: '/fii-dii', icon: Building2, label: 'FII / DII' },
   { to: '/news', icon: Newspaper, label: 'News' },
 ]
 
@@ -92,6 +94,7 @@ export default function App() {
                 <Route path="/predict" element={<Predict />} />
                 <Route path="/risk" element={<Risk />} />
                 <Route path="/backtest" element={<Backtest />} />
+                <Route path="/fii-dii" element={<FiiDii />} />
                 <Route path="/news" element={<News />} />
               </Routes>
             </Suspense>
