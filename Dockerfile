@@ -19,7 +19,8 @@ RUN mkdir -p models
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+# Give 5 minutes (300s) for app to start (ML libraries take time to initialize)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 # Use shell form (not exec form) so $PORT expands correctly
