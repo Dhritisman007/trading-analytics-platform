@@ -15211,5 +15211,49 @@
     "outcome": null,
     "outcome_price": null,
     "correct": null
+  },
+  {
+    "id": 1384,
+    "symbol": "^NSEI",
+    "signal": "SELL",
+    "confidence": 58.3,
+    "price_at_prediction": 23897.95,
+    "predicted_at": "2026-04-27T19:46:21.103518+00:00",
+    "outcome": null,
+    "outcome_price": null,
+    "correct": null
+  },
+  {
+    "id": 1385,
+    "symbol": "^NSEI",
+    "signal": "SELL",
+    "confidence": 58.3,
+    "price_at_prediction": 23897.95,
+    "predicted_at": "2026-04-27T19:46:21.219956+00:00",
+    "outcome": null,
+    "outcome_price": null,
+    "correct": null
+  },
+  {
+    "id": 1386,
+    "symbol": "^BSESN",
+    "signal": "SELL",
+    "confidence": 59.2,
+    "price_at_prediction": 76664.21,
+    "predicted_at": "2026-04-27T19:46:21.454811+00:00",
+    "outcome": null,
+    "outcome_price": null,
+    "correct": null
+  },
+  {
+    "id": 1387,
+    "symbol": "^NSEBANK",
+    "signal": "SELL",
+    "confidence": 55.0,
+    "price_at_prediction": 56089.75,
+    "predicted_at": "2026-04-27T19:46:21.686625+00:00",
+    "outcome": null,
+    "outcome_price": null,
+    "correct": null
   }
 ]

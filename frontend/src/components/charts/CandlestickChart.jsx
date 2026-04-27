@@ -118,13 +118,16 @@ export default function CandlestickChart({
         scaleMargins: { top: 0.8, bottom: 0 },
       })
 
-      const volumeData = data.map((d) => ({
-        time:  d.date,
-        value: d.volume,
-        color: d.close >= d.open
-          ? `${CHART_COLORS.bullish}80`   // green with 50% opacity
-          : `${CHART_COLORS.bearish}80`,  // red with 50% opacity
-      }))
+      // Deduplicate volume data using cleanChartData
+      const volumeData = cleanChartData(
+        data.map((d) => ({
+          time:  d.date,
+          value: d.volume,
+          color: d.close >= d.open
+            ? `${CHART_COLORS.bullish}80`   // green with 50% opacity
+            : `${CHART_COLORS.bearish}80`,  // red with 50% opacity
+        }))
+      )
       volumeSeries.setData(volumeData)
       volumeRef.current = volumeSeries
     }
@@ -138,6 +141,16 @@ export default function CandlestickChart({
         const color = fvg.type === 'bullish'
           ? `${CHART_COLORS.bullish}30`
           : `${CHART_COLORS.bearish}30`
+
+        const startDate = fvg.candle_3
+        const endDate   = data[data.length - 1].date
+
+        // Guard against same-timestamp crash: if candle_3 === endDate, skip rendering
+        // This prevents "data must be asc ordered by time" error from lightweight-charts
+        if (startDate === endDate) {
+          // Edge case: FVG is at the very last candle — skip to avoid duplicate timestamps
+          return
+        }
 
         // Draw FVG as a price band using two lines
         const topLine = chart.addSeries(LineSeries, {
@@ -156,9 +169,6 @@ export default function CandlestickChart({
         })
 
         // Extend lines from candle_3 date to end of data
-        const startDate = fvg.candle_3
-        const endDate   = data[data.length - 1].date
-
         topLine.setData([
           { time: startDate, value: fvg.gap_top },
           { time: endDate,   value: fvg.gap_top },
