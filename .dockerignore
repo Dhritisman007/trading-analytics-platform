@@ -1,0 +1,14 @@
+# .dockerignore
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.git/
+.pytest_cache/
+frontend/node_modules/
+frontend/.vite/
+models/*.pkl
+*.log
+.DS_Store
+alembic/versions/

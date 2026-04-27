@@ -32,3 +32,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+# core/config.py — add this field to Settings class
+port: int = 8000

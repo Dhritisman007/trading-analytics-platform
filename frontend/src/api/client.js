@@ -2,9 +2,12 @@
 
 import axios from 'axios'
 
-// All requests go through Vite proxy → FastAPI backend
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+
+// In development we use Vite proxy (/api -> localhost:8000).
+// In production (Vercel), set VITE_API_BASE_URL to your backend URL.
 const client = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   timeout: 30000,  // 30s timeout — backtests can take a while
   headers: {
     'Content-Type': 'application/json',
@@ -47,3 +50,4 @@ client.interceptors.response.use(
 )
 
 export default client
+export { API_BASE_URL }

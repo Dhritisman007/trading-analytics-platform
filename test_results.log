@@ -1,0 +1,418 @@
+============================= test session starts ==============================
+collecting ... collected 326 items
+
+tests/test_backtest.py::TestSharpeRatio::test_positive_returns_give_positive_sharpe PASSED [  0%]
+tests/test_backtest.py::TestSharpeRatio::test_zero_returns_give_zero_sharpe PASSED [  0%]
+tests/test_backtest.py::TestSharpeRatio::test_negative_returns_give_negative_sharpe PASSED [  0%]
+tests/test_backtest.py::TestSharpeRatio::test_empty_returns_give_zero PASSED [  1%]
+tests/test_backtest.py::TestSharpeRatio::test_single_return_gives_zero PASSED [  1%]
+tests/test_backtest.py::TestMaxDrawdown::test_no_drawdown_all_rising PASSED [  1%]
+tests/test_backtest.py::TestMaxDrawdown::test_detects_correct_drawdown PASSED [  2%]
+tests/test_backtest.py::TestMaxDrawdown::test_empty_equity_returns_zero PASSED [  2%]
+tests/test_backtest.py::TestMaxDrawdown::test_peak_value_correct PASSED  [  2%]
+tests/test_backtest.py::TestProfitFactor::test_profitable_trades PASSED  [  3%]
+tests/test_backtest.py::TestProfitFactor::test_all_losses PASSED         [  3%]
+tests/test_backtest.py::TestProfitFactor::test_no_losses_returns_inf PASSED [  3%]
+tests/test_backtest.py::TestProfitFactor::test_empty_trades PASSED       [  3%]
+tests/test_backtest.py::TestWinRate::test_correct_win_rate PASSED        [  4%]
+tests/test_backtest.py::TestWinRate::test_empty_trades PASSED            [  4%]
+tests/test_backtest.py::TestWinRate::test_all_wins PASSED                [  4%]
+tests/test_backtest.py::TestGradeStrategy::test_excellent_gets_grade_a PASSED [  5%]
+tests/test_backtest.py::TestGradeStrategy::test_poor_gets_grade_f PASSED [  5%]
+tests/test_backtest.py::TestGradeStrategy::test_color_is_hex PASSED      [  5%]
+tests/test_backtest.py::TestStrategyRegistry::test_all_three_strategies_registered PASSED [  6%]
+tests/test_backtest.py::TestStrategyRegistry::test_each_strategy_has_class_and_params PASSED [  6%]
+tests/test_backtest.py::TestBacktestEndpoints::test_strategies_list_returns_200 PASSED [  6%]
+tests/test_backtest.py::TestBacktestEndpoints::test_strategies_list_has_three PASSED [  7%]
+tests/test_backtest.py::TestBacktestEndpoints::test_rsi_backtest_returns_200 PASSED [  7%]
+tests/test_backtest.py::TestBacktestEndpoints::test_response_has_required_sections PASSED [  7%]
+tests/test_backtest.py::TestBacktestEndpoints::test_performance_has_all_metrics PASSED [  7%]
+tests/test_backtest.py::TestBacktestEndpoints::test_equity_curve_is_list PASSED [  8%]
+tests/test_backtest.py::TestBacktestEndpoints::test_grade_is_valid_letter PASSED [  8%]
+tests/test_backtest.py::TestBacktestEndpoints::test_vs_buy_hold_has_alpha PASSED [  8%]
+tests/test_backtest.py::TestBacktestEndpoints::test_ema_cross_strategy PASSED [  9%]
+tests/test_backtest.py::TestBacktestEndpoints::test_macd_strategy PASSED [  9%]
+tests/test_backtest.py::TestBacktestEndpoints::test_invalid_strategy_returns_400 PASSED [  9%]
+tests/test_backtest.py::TestBacktestEndpoints::test_custom_rsi_params PASSED [ 10%]
+tests/test_backtest.py::TestBacktestEndpoints::test_compare_endpoint_returns_200 PASSED [ 10%]
+tests/test_backtest.py::TestBacktestEndpoints::test_compare_has_winner PASSED [ 10%]
+tests/test_backtest.py::TestBacktestEndpoints::test_compare_has_three_results PASSED [ 11%]
+tests/test_cache.py::TestTTLCache::test_set_and_get_returns_value PASSED [ 11%]
+tests/test_cache.py::TestTTLCache::test_get_missing_key_returns_none PASSED [ 11%]
+tests/test_cache.py::TestTTLCache::test_expired_entry_returns_none PASSED [ 11%]
+tests/test_cache.py::TestTTLCache::test_live_entry_not_expired PASSED    [ 12%]
+tests/test_cache.py::TestTTLCache::test_delete_removes_entry PASSED      [ 12%]
+tests/test_cache.py::TestTTLCache::test_clear_wipes_all_entries PASSED   [ 12%]
+tests/test_cache.py::TestTTLCache::test_overwrite_updates_value PASSED   [ 13%]
+tests/test_cache.py::TestTTLCache::test_stats_returns_correct_live_count PASSED [ 13%]
+tests/test_cache.py::TestTTLCache::test_stats_counts_expired_correctly PASSED [ 13%]
+tests/test_cache.py::TestCacheEndpoints::test_cache_stats_returns_200 PASSED [ 14%]
+tests/test_cache.py::TestCacheEndpoints::test_cache_stats_has_required_keys PASSED [ 14%]
+tests/test_cache.py::TestCacheEndpoints::test_cache_clear_returns_200 PASSED [ 14%]
+tests/test_cache.py::TestCacheEndpoints::test_market_endpoint_uses_cache_on_second_call PASSED [ 15%]
+tests/test_database.py::TestModels::test_trade_model_creates PASSED      [ 15%]
+tests/test_database.py::TestModels::test_prediction_model_creates PASSED [ 15%]
+tests/test_database.py::TestModels::test_backtest_model_creates PASSED   [ 15%]
+tests/test_database.py::TestModels::test_news_article_model_creates PASSED [ 16%]
+tests/test_database.py::TestModels::test_fiidii_flow_model_creates PASSED [ 16%]
+tests/test_database.py::TestTradeRepository::test_create_trade PASSED    [ 16%]
+tests/test_database.py::TestTradeRepository::test_get_by_id PASSED       [ 17%]
+tests/test_database.py::TestTradeRepository::test_get_all_open PASSED    [ 17%]
+tests/test_database.py::TestTradeRepository::test_close_trade PASSED     [ 17%]
+tests/test_database.py::TestPredictionRepository::test_create_prediction PASSED [ 18%]
+tests/test_database.py::TestPredictionRepository::test_get_recent PASSED [ 18%]
+tests/test_database.py::TestPredictionRepository::test_get_accuracy_no_data PASSED [ 18%]
+tests/test_database.py::TestBacktestRepository::test_create_backtest PASSED [ 19%]
+tests/test_database.py::TestBacktestRepository::test_get_best_strategy PASSED [ 19%]
+tests/test_database.py::TestBacktestRepository::test_get_by_strategy PASSED [ 19%]
+tests/test_database.py::TestNewsRepository::test_create_article PASSED   [ 19%]
+tests/test_database.py::TestNewsRepository::test_get_by_url PASSED       [ 20%]
+tests/test_database.py::TestFiiDiiRepository::test_create_flow PASSED    [ 20%]
+tests/test_database.py::TestFiiDiiRepository::test_get_by_date PASSED    [ 20%]
+tests/test_database.py::TestFiiDiiRepository::test_get_latest PASSED     [ 21%]
+tests/test_error_handling.py::TestCustomExceptions::test_symbol_not_found_has_404_status PASSED [ 21%]
+tests/test_error_handling.py::TestCustomExceptions::test_insufficient_data_has_422_status PASSED [ 21%]
+tests/test_error_handling.py::TestCustomExceptions::test_invalid_parameter_has_400_status PASSED [ 22%]
+tests/test_error_handling.py::TestCustomExceptions::test_data_fetch_error_has_503_status PASSED [ 22%]
+tests/test_error_handling.py::TestCustomExceptions::test_all_exceptions_inherit_base PASSED [ 22%]
+tests/test_error_handling.py::TestCustomExceptions::test_base_exception_has_message_and_status PASSED [ 23%]
+tests/test_error_handling.py::TestErrorResponseShape::test_invalid_period_returns_400_with_correct_shape PASSED [ 23%]
+tests/test_error_handling.py::TestErrorResponseShape::test_invalid_interval_returns_400_with_correct_shape PASSED [ 23%]
+tests/test_error_handling.py::TestErrorResponseShape::test_invalid_symbol_returns_404_with_correct_shape PASSED [ 23%]
+tests/test_error_handling.py::TestErrorResponseShape::test_rsi_window_too_large_returns_422 PASSED [ 24%]
+tests/test_error_handling.py::TestErrorResponseShape::test_validation_error_has_details_field PASSED [ 24%]
+tests/test_error_handling.py::TestErrorResponseShape::test_validation_error_details_has_field_and_message PASSED [ 24%]
+tests/test_error_handling.py::TestErrorResponseShape::test_not_found_route_returns_404 PASSED [ 25%]
+tests/test_error_handling.py::TestErrorResponseShape::test_error_path_matches_request_path PASSED [ 25%]
+tests/test_error_handling.py::TestErrorResponseShape::test_error_has_iso_timestamp PASSED [ 25%]
+tests/test_error_handling.py::TestErrorResponseShape::test_min_gap_size_negative_returns_422 PASSED [ 26%]
+tests/test_error_handling.py::TestSuccessfulResponsesUnaffected::test_market_still_returns_200 PASSED [ 26%]
+tests/test_error_handling.py::TestSuccessfulResponsesUnaffected::test_indicators_still_returns_200 PASSED [ 26%]
+tests/test_error_handling.py::TestSuccessfulResponsesUnaffected::test_fvg_still_returns_200 PASSED [ 26%]
+tests/test_error_handling.py::TestSuccessfulResponsesUnaffected::test_health_still_returns_200 PASSED [ 27%]
+tests/test_explainer.py::TestFeatureLabels::test_all_features_have_labels PASSED [ 27%]
+tests/test_explainer.py::TestFeatureLabels::test_all_features_have_categories PASSED [ 27%]
+tests/test_explainer.py::TestContributions::test_contributions_length_matches_features PASSED [ 28%]
+tests/test_explainer.py::TestContributions::test_each_contribution_has_required_keys PASSED [ 28%]
+tests/test_explainer.py::TestContributions::test_direction_is_bullish_or_bearish PASSED [ 28%]
+tests/test_explainer.py::TestContributions::test_sorted_by_magnitude_descending PASSED [ 29%]
+tests/test_explainer.py::TestChartData::test_chart_data_has_required_keys PASSED [ 29%]
+tests/test_explainer.py::TestChartData::test_chart_data_length_matches_top_n PASSED [ 29%]
+tests/test_explainer.py::TestChartData::test_colors_are_green_or_red PASSED [ 30%]
+tests/test_explainer.py::TestExplanationGeneration::test_explanation_has_three_levels PASSED [ 30%]
+tests/test_explainer.py::TestExplanationGeneration::test_one_line_mentions_signal PASSED [ 30%]
+tests/test_explainer.py::TestExplanationGeneration::test_one_line_mentions_confidence PASSED [ 30%]
+tests/test_explainer.py::TestExplanationGeneration::test_technical_mentions_feature_count PASSED [ 31%]
+tests/test_explainer.py::TestPerformanceTracker::test_record_and_retrieve PASSED [ 31%]
+tests/test_explainer.py::TestPerformanceTracker::test_summary_has_required_keys PASSED [ 31%]
+tests/test_explainer.py::TestPredictEndpointDay9::test_explanation_has_three_levels PASSED [ 32%]
+tests/test_explainer.py::TestPredictEndpointDay9::test_category_summary_present PASSED [ 32%]
+tests/test_explainer.py::TestPredictEndpointDay9::test_chart_data_present_with_arrays PASSED [ 32%]
+tests/test_explainer.py::TestPredictEndpointDay9::test_strength_field_valid PASSED [ 33%]
+tests/test_explainer.py::TestPredictEndpointDay9::test_color_field_is_hex PASSED [ 33%]
+tests/test_explainer.py::TestPredictEndpointDay9::test_contributions_list_not_empty PASSED [ 33%]
+tests/test_explainer.py::TestPredictEndpointDay9::test_performance_endpoint PASSED [ 34%]
+tests/test_explainer.py::TestPredictEndpointDay9::test_compare_endpoint PASSED [ 34%]
+tests/test_fii_dii.py::TestFallbackData::test_returns_list PASSED        [ 34%]
+tests/test_fii_dii.py::TestFallbackData::test_returns_correct_count PASSED [ 34%]
+tests/test_fii_dii.py::TestFallbackData::test_each_record_has_required_keys PASSED [ 35%]
+tests/test_fii_dii.py::TestFallbackData::test_fii_has_buy_sell_net PASSED [ 35%]
+tests/test_fii_dii.py::TestFallbackData::test_action_is_buy_or_sell PASSED [ 35%]
+tests/test_fii_dii.py::TestFallbackData::test_sorted_oldest_first PASSED [ 36%]
+tests/test_fii_dii.py::TestMovingAverage::test_correct_average PASSED    [ 36%]
+tests/test_fii_dii.py::TestMovingAverage::test_insufficient_data_returns_none PASSED [ 36%]
+tests/test_fii_dii.py::TestMovingAverage::test_single_value_window_1 PASSED [ 37%]
+tests/test_fii_dii.py::TestConsecutiveDays::test_detects_buying_streak PASSED [ 37%]
+tests/test_fii_dii.py::TestConsecutiveDays::test_detects_selling_streak PASSED [ 37%]
+tests/test_fii_dii.py::TestConsecutiveDays::test_significant_flag_above_5 PASSED [ 38%]
+tests/test_fii_dii.py::TestConsecutiveDays::test_not_significant_below_5 PASSED [ 38%]
+tests/test_fii_dii.py::TestPressureScore::test_strong_fii_buying_positive_score PASSED [ 38%]
+tests/test_fii_dii.py::TestPressureScore::test_strong_selling_negative_score PASSED [ 38%]
+tests/test_fii_dii.py::TestPressureScore::test_score_in_valid_range PASSED [ 39%]
+tests/test_fii_dii.py::TestPressureScore::test_has_required_keys PASSED  [ 39%]
+tests/test_fii_dii.py::TestGenerateSignal::test_both_buying_is_bullish PASSED [ 39%]
+tests/test_fii_dii.py::TestGenerateSignal::test_both_selling_is_bearish PASSED [ 40%]
+tests/test_fii_dii.py::TestGenerateSignal::test_fii_buy_dii_sell_cautious_bullish PASSED [ 40%]
+tests/test_fii_dii.py::TestGenerateSignal::test_description_is_string PASSED [ 40%]
+tests/test_fii_dii.py::TestAnalyzeFlows::test_returns_required_keys PASSED [ 41%]
+tests/test_fii_dii.py::TestAnalyzeFlows::test_chart_data_has_arrays PASSED [ 41%]
+tests/test_fii_dii.py::TestAnalyzeFlows::test_chart_arrays_same_length PASSED [ 41%]
+tests/test_fii_dii.py::TestAnalyzeFlows::test_colors_are_valid_hex PASSED [ 42%]
+tests/test_fii_dii.py::TestAnalyzeFlows::test_empty_data_returns_error PASSED [ 42%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_main_endpoint_returns_200 PASSED [ 42%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_response_has_required_sections PASSED [ 42%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_today_endpoint_returns_200 PASSED [ 43%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_today_has_fii_and_dii PASSED [ 43%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_signal_is_valid PASSED  [ 43%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_pressure_score_in_range PASSED [ 44%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_chart_endpoint_returns_200 PASSED [ 44%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_summary_endpoint_returns_200 PASSED [ 44%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_period_summary_buy_sell_consistent PASSED [ 45%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_refresh_endpoint_returns_200 PASSED [ 45%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_invalid_days_returns_422 PASSED [ 45%]
+tests/test_fii_dii.py::TestFiiDiiEndpoints::test_days_param_respected PASSED [ 46%]
+tests/test_fvg.py::TestClassifyFVGStrength::test_large_gap_relative_to_atr_is_strong PASSED [ 46%]
+tests/test_fvg.py::TestClassifyFVGStrength::test_medium_gap_relative_to_atr_is_medium PASSED [ 46%]
+tests/test_fvg.py::TestClassifyFVGStrength::test_small_gap_relative_to_atr_is_weak PASSED [ 46%]
+tests/test_fvg.py::TestClassifyFVGStrength::test_fallback_without_atr_large_gap PASSED [ 47%]
+tests/test_fvg.py::TestClassifyFVGStrength::test_fallback_without_atr_small_gap PASSED [ 47%]
+tests/test_fvg.py::TestCheckIfFilled::test_bullish_fvg_filled_when_later_candle_dips_into_gap PASSED [ 47%]
+tests/test_fvg.py::TestCheckIfFilled::test_bullish_fvg_open_when_price_stays_above_gap PASSED [ 48%]
+tests/test_fvg.py::TestCheckIfFilled::test_bearish_fvg_filled_when_later_candle_rises_into_gap PASSED [ 48%]
+tests/test_fvg.py::TestCheckIfFilled::test_bearish_fvg_open_when_price_stays_below_gap PASSED [ 48%]
+tests/test_fvg.py::TestDetectFVGs::test_returns_required_keys PASSED     [ 49%]
+tests/test_fvg.py::TestDetectFVGs::test_summary_has_correct_keys PASSED  [ 49%]
+tests/test_fvg.py::TestDetectFVGs::test_bullish_plus_bearish_equals_total PASSED [ 49%]
+tests/test_fvg.py::TestDetectFVGs::test_open_plus_filled_equals_total PASSED [ 50%]
+tests/test_fvg.py::TestDetectFVGs::test_each_fvg_has_required_fields PASSED [ 50%]
+tests/test_fvg.py::TestDetectFVGs::test_fvg_type_is_always_valid PASSED  [ 50%]
+tests/test_fvg.py::TestDetectFVGs::test_gap_top_always_greater_than_gap_bottom PASSED [ 50%]
+tests/test_fvg.py::TestDetectFVGs::test_strength_is_always_valid PASSED  [ 51%]
+tests/test_fvg.py::TestDetectFVGs::test_only_open_filter_works PASSED    [ 51%]
+tests/test_fvg.py::TestDetectFVGs::test_min_gap_size_filter_works PASSED [ 51%]
+tests/test_fvg.py::TestDetectFVGs::test_fill_rate_between_0_and_100 PASSED [ 52%]
+tests/test_fvg.py::TestFVGEndpoints::test_fvg_endpoint_200 PASSED        [ 52%]
+tests/test_fvg.py::TestFVGEndpoints::test_fvg_open_endpoint_200 PASSED   [ 52%]
+tests/test_fvg.py::TestFVGEndpoints::test_only_open_query_param PASSED   [ 53%]
+tests/test_fvg.py::TestFVGEndpoints::test_min_gap_size_query_param PASSED [ 53%]
+tests/test_fvg.py::TestFVGEndpoints::test_sensex_fvg PASSED              [ 53%]
+tests/test_fvg.py::TestFVGEndpoints::test_invalid_min_gap_rejected PASSED [ 53%]
+tests/test_indicators.py::TestCalculateRSI::test_returns_series PASSED   [ 54%]
+tests/test_indicators.py::TestCalculateRSI::test_rsi_in_valid_range PASSED [ 54%]
+tests/test_indicators.py::TestCalculateRSI::test_custom_window_accepted PASSED [ 54%]
+tests/test_indicators.py::TestCalculateEMA::test_returns_series PASSED   [ 55%]
+tests/test_indicators.py::TestCalculateEMA::test_ema_close_to_price PASSED [ 55%]
+tests/test_indicators.py::TestCalculateEMA::test_longer_window_smoother PASSED [ 55%]
+tests/test_indicators.py::TestCalculateMACD::test_returns_dict_with_three_keys PASSED [ 56%]
+tests/test_indicators.py::TestCalculateMACD::test_histogram_is_macd_minus_signal PASSED [ 56%]
+tests/test_indicators.py::TestCalculateATR::test_returns_series PASSED   [ 56%]
+tests/test_indicators.py::TestCalculateATR::test_atr_always_positive PASSED [ 57%]
+tests/test_indicators.py::TestValidateWindows::test_valid_windows_pass PASSED [ 57%]
+tests/test_indicators.py::TestValidateWindows::test_rsi_window_too_large_raises PASSED [ 57%]
+tests/test_indicators.py::TestValidateWindows::test_ema_window_too_large_raises PASSED [ 57%]
+tests/test_indicators.py::TestInterpretRSI::test_above_70_is_overbought PASSED [ 58%]
+tests/test_indicators.py::TestInterpretRSI::test_below_30_is_oversold PASSED [ 58%]
+tests/test_indicators.py::TestInterpretRSI::test_middle_is_neutral PASSED [ 58%]
+tests/test_indicators.py::TestInterpretRSI::test_exact_boundary_70_is_overbought PASSED [ 59%]
+tests/test_indicators.py::TestInterpretRSI::test_exact_boundary_30_is_oversold PASSED [ 59%]
+tests/test_indicators.py::TestIndicatorsEndpoint::test_returns_200 PASSED [ 59%]
+tests/test_indicators.py::TestIndicatorsEndpoint::test_response_has_required_keys PASSED [ 60%]
+tests/test_indicators.py::TestIndicatorsEndpoint::test_each_row_has_all_indicators PASSED [ 60%]
+tests/test_indicators.py::TestIndicatorsEndpoint::test_rsi_in_range PASSED [ 60%]
+tests/test_indicators.py::TestIndicatorsEndpoint::test_high_gte_low_every_row PASSED [ 61%]
+tests/test_indicators.py::TestIndicatorsEndpoint::test_custom_ema_window PASSED [ 61%]
+tests/test_indicators.py::TestIndicatorsEndpoint::test_invalid_rsi_window_rejected PASSED [ 61%]
+tests/test_indicators.py::TestIndicatorsEndpoint::test_latest_endpoint_returns_200 PASSED [ 61%]
+tests/test_indicators.py::TestIndicatorsEndpoint::test_latest_has_rsi_signal PASSED [ 62%]
+tests/test_indicators.py::TestIndicatorsEndpoint::test_sensex_works PASSED [ 62%]
+tests/test_market.py::test_get_price PASSED                              [ 62%]
+tests/test_news.py::TestSentimentAnalyzer::test_positive_headline_scores_positive PASSED [ 63%]
+tests/test_news.py::TestSentimentAnalyzer::test_negative_headline_scores_negative PASSED [ 63%]
+tests/test_news.py::TestSentimentAnalyzer::test_neutral_headline_scores_neutral PASSED [ 63%]
+tests/test_news.py::TestSentimentAnalyzer::test_empty_text_returns_neutral PASSED [ 64%]
+tests/test_news.py::TestSentimentAnalyzer::test_result_has_required_keys PASSED [ 64%]
+tests/test_news.py::TestSentimentAnalyzer::test_compound_in_valid_range PASSED [ 64%]
+tests/test_news.py::TestSentimentAnalyzer::test_positive_label_has_green_color PASSED [ 65%]
+tests/test_news.py::TestSentimentAnalyzer::test_negative_label_has_red_color PASSED [ 65%]
+tests/test_news.py::TestSentimentAnalyzer::test_financial_boosters_applied PASSED [ 65%]
+tests/test_news.py::TestBatchAnalysis::test_empty_batch_returns_neutral PASSED [ 65%]
+tests/test_news.py::TestBatchAnalysis::test_batch_counts_correct PASSED  [ 66%]
+tests/test_news.py::TestBatchAnalysis::test_all_positive_gives_positive_mood PASSED [ 66%]
+tests/test_news.py::TestBatchAnalysis::test_distribution_sums_to_100 PASSED [ 66%]
+tests/test_news.py::TestMarketImpact::test_high_impact_for_rbi_news PASSED [ 67%]
+tests/test_news.py::TestMarketImpact::test_low_impact_for_generic_news PASSED [ 67%]
+tests/test_news.py::TestMarketImpact::test_high_impact_keywords_extracted PASSED [ 67%]
+tests/test_news.py::TestMarketImpact::test_impact_has_required_keys PASSED [ 68%]
+tests/test_news.py::TestNewsEndpoints::test_news_endpoint_returns_200 PASSED [ 68%]
+tests/test_news.py::TestNewsEndpoints::test_response_has_required_keys PASSED [ 68%]
+tests/test_news.py::TestNewsEndpoints::test_articles_is_list PASSED      [ 69%]
+tests/test_news.py::TestNewsEndpoints::test_each_article_has_sentiment PASSED [ 69%]
+tests/test_news.py::TestNewsEndpoints::test_each_article_has_impact PASSED [ 69%]
+tests/test_news.py::TestNewsEndpoints::test_sentiment_filter_positive PASSED [ 69%]
+tests/test_news.py::TestNewsEndpoints::test_sentiment_filter_negative PASSED [ 70%]
+tests/test_news.py::TestNewsEndpoints::test_invalid_sentiment_returns_400 PASSED [ 70%]
+tests/test_news.py::TestNewsEndpoints::test_invalid_topic_returns_400 PASSED [ 70%]
+tests/test_news.py::TestNewsEndpoints::test_limit_respected PASSED       [ 71%]
+tests/test_news.py::TestNewsEndpoints::test_mood_endpoint_returns_200 PASSED [ 71%]
+tests/test_news.py::TestNewsEndpoints::test_mood_has_market_mood PASSED  [ 71%]
+tests/test_news.py::TestNewsEndpoints::test_breaking_endpoint_returns_200 PASSED [ 72%]
+tests/test_news.py::TestNewsEndpoints::test_topics_endpoint_returns_list PASSED [ 72%]
+tests/test_news.py::TestNewsEndpoints::test_refresh_endpoint_returns_200 PASSED [ 72%]
+tests/test_news.py::TestNewsEndpoints::test_market_mood_label_valid PASSED [ 73%]
+tests/test_predict.py::TestFeatureEngineer::test_returns_dataframe PASSED [ 73%]
+tests/test_predict.py::TestFeatureEngineer::test_all_feature_columns_present PASSED [ 73%]
+tests/test_predict.py::TestFeatureEngineer::test_target_column_present PASSED [ 73%]
+tests/test_predict.py::TestFeatureEngineer::test_target_is_binary PASSED [ 74%]
+tests/test_predict.py::TestFeatureEngineer::test_no_nan_after_dropna PASSED [ 74%]
+tests/test_predict.py::TestFeatureEngineer::test_rsi_norm_between_0_and_1 PASSED [ 74%]
+tests/test_predict.py::TestFeatureEngineer::test_binary_flags_are_0_or_1 PASSED [ 75%]
+tests/test_predict.py::TestFeatureEngineer::test_fewer_rows_after_feature_engineering PASSED [ 75%]
+tests/test_predict.py::TestFeatureEngineer::test_feature_count_matches_expected PASSED [ 75%]
+tests/test_predict.py::TestPredictEndpoint::test_predict_returns_200 PASSED [ 76%]
+tests/test_predict.py::TestPredictEndpoint::test_response_has_required_keys PASSED [ 76%]
+tests/test_predict.py::TestPredictEndpoint::test_signal_is_buy_or_sell PASSED [ 76%]
+tests/test_predict.py::TestPredictEndpoint::test_confidence_between_50_and_100 PASSED [ 76%]
+tests/test_predict.py::TestPredictEndpoint::test_probabilities_sum_to_100 PASSED [ 77%]
+tests/test_predict.py::TestPredictEndpoint::test_top_features_not_empty PASSED [ 77%]
+tests/test_predict.py::TestPredictEndpoint::test_explanation_is_string PASSED [ 77%]
+tests/test_predict.py::TestPredictEndpoint::test_disclaimer_present PASSED [ 78%]
+tests/test_predict.py::TestPredictEndpoint::test_model_status_endpoint PASSED [ 78%]
+tests/test_predict.py::TestPredictEndpoint::test_model_status_shows_trained_after_predict PASSED [ 78%]
+tests/test_predict.py::TestPredictEndpoint::test_model_info_has_accuracy PASSED [ 79%]
+tests/test_predict.py::TestPredictEndpoint::test_market_context_has_rsi PASSED [ 79%]
+tests/test_predict.py::TestPredictEndpoint::test_signal_confidence_sum_with_probabilities PASSED [ 79%]
+tests/test_predict.py::TestPredictEndpoint::test_top_features_have_numeric_values PASSED [ 80%]
+tests/test_predict.py::TestPredictEndpoint::test_prediction_response_includes_symbol_and_name PASSED [ 80%]
+tests/test_repositories.py::TestTradeRepository::test_create_trade PASSED [ 80%]
+tests/test_repositories.py::TestTradeRepository::test_get_by_id PASSED   [ 80%]
+tests/test_repositories.py::TestTradeRepository::test_get_all_open PASSED [ 81%]
+tests/test_repositories.py::TestTradeRepository::test_get_by_symbol PASSED [ 81%]
+tests/test_repositories.py::TestTradeRepository::test_get_by_grade PASSED [ 81%]
+tests/test_repositories.py::TestTradeRepository::test_close_trade PASSED [ 82%]
+tests/test_repositories.py::TestTradeRepository::test_get_statistics PASSED [ 82%]
+tests/test_repositories.py::TestPredictionRepository::test_create_prediction PASSED [ 82%]
+tests/test_repositories.py::TestPredictionRepository::test_get_recent_predictions PASSED [ 83%]
+tests/test_repositories.py::TestPredictionRepository::test_get_accuracy PASSED [ 83%]
+tests/test_repositories.py::TestBacktestResultRepository::test_create_backtest_result PASSED [ 83%]
+tests/test_repositories.py::TestBacktestResultRepository::test_get_best_strategy PASSED [ 84%]
+tests/test_repositories.py::TestBacktestResultRepository::test_get_by_strategy PASSED [ 84%]
+tests/test_repositories.py::TestNewsArticleRepository::test_create_article PASSED [ 84%]
+tests/test_repositories.py::TestNewsArticleRepository::test_get_by_sentiment PASSED [ 84%]
+tests/test_repositories.py::TestNewsArticleRepository::test_get_sentiment_aggregate PASSED [ 85%]
+tests/test_repositories.py::TestFiidiiFlowRepository::test_create_flow PASSED [ 85%]
+tests/test_repositories.py::TestFiidiiFlowRepository::test_get_latest PASSED [ 85%]
+tests/test_repositories.py::TestFiidiiFlowRepository::test_get_net_trend PASSED [ 86%]
+tests/test_repositories.py::TestFiidiiFlowRepository::test_is_bullish PASSED [ 86%]
+tests/test_repositories.py::TestUserPreferenceRepository::test_create_or_update_new PASSED [ 86%]
+tests/test_repositories.py::TestUserPreferenceRepository::test_create_or_update_existing PASSED [ 87%]
+tests/test_repositories.py::TestUserPreferenceRepository::test_get_by_user_id PASSED [ 87%]
+tests/test_repositories.py::TestUserPreferenceRepository::test_get_default_symbol PASSED [ 87%]
+tests/test_repositories.py::TestUserPreferenceRepository::test_get_risk_preference PASSED [ 88%]
+tests/test_repositories.py::TestUserPreferenceRepository::test_delete PASSED [ 88%]
+tests/test_risk.py::TestPositionSize::test_basic_calculation PASSED      [ 88%]
+tests/test_risk.py::TestPositionSize::test_risk_amount_close_to_target PASSED [ 88%]
+tests/test_risk.py::TestPositionSize::test_stop_above_entry_raises PASSED [ 89%]
+tests/test_risk.py::TestPositionSize::test_risk_pct_too_high_raises PASSED [ 89%]
+tests/test_risk.py::TestPositionSize::test_negative_capital_raises PASSED [ 89%]
+tests/test_risk.py::TestPositionSize::test_higher_risk_pct_gives_more_units PASSED [ 90%]
+tests/test_risk.py::TestPositionSize::test_wider_stop_gives_fewer_units PASSED [ 90%]
+tests/test_risk.py::TestRiskReward::test_basic_calculation PASSED        [ 90%]
+tests/test_risk.py::TestRiskReward::test_rr_ratio_correct PASSED         [ 91%]
+tests/test_risk.py::TestRiskReward::test_excellent_quality_at_3x PASSED  [ 91%]
+tests/test_risk.py::TestRiskReward::test_good_quality_at_2x PASSED       [ 91%]
+tests/test_risk.py::TestRiskReward::test_poor_quality_at_1x PASSED       [ 92%]
+tests/test_risk.py::TestRiskReward::test_target_below_entry_raises PASSED [ 92%]
+tests/test_risk.py::TestRiskReward::test_rr_display_format PASSED        [ 92%]
+tests/test_risk.py::TestATRStops::test_stop_below_entry PASSED           [ 92%]
+tests/test_risk.py::TestATRStops::test_target_above_entry PASSED         [ 93%]
+tests/test_risk.py::TestATRStops::test_stop_distance_equals_atr_times_multiplier PASSED [ 93%]
+tests/test_risk.py::TestATRStops::test_zero_atr_raises PASSED            [ 93%]
+tests/test_risk.py::TestTradeScore::test_high_rr_gives_high_score PASSED [ 94%]
+tests/test_risk.py::TestTradeScore::test_low_rr_gives_low_score PASSED   [ 94%]
+tests/test_risk.py::TestTradeScore::test_grade_a_for_excellent_trade PASSED [ 94%]
+tests/test_risk.py::TestTradeScore::test_grade_f_for_terrible_trade PASSED [ 95%]
+tests/test_risk.py::TestTradeScore::test_factors_list_not_empty PASSED   [ 95%]
+tests/test_risk.py::TestTradeScore::test_color_is_hex PASSED             [ 95%]
+tests/test_risk.py::TestFullAnalysis::test_returns_all_sections PASSED   [ 96%]
+tests/test_risk.py::TestFullAnalysis::test_summary_is_string PASSED      [ 96%]
+tests/test_risk.py::TestFullAnalysis::test_with_atr_includes_atr_stops PASSED [ 96%]
+tests/test_risk.py::TestFullAnalysis::test_without_atr_atr_stops_is_none PASSED [ 96%]
+tests/test_risk.py::TestFullAnalysis::test_max_profit_greater_than_max_loss_for_good_rr PASSED [ 97%]
+tests/test_risk.py::TestRiskEndpoints::test_full_analysis_returns_200 PASSED [ 97%]
+tests/test_risk.py::TestRiskEndpoints::test_response_has_summary PASSED  [ 97%]
+tests/test_risk.py::TestRiskEndpoints::test_with_ml_params PASSED        [ 98%]
+tests/test_risk.py::TestRiskEndpoints::test_stop_above_entry_returns_400 PASSED [ 98%]
+tests/test_risk.py::TestRiskEndpoints::test_invalid_risk_pct_returns_422 PASSED [ 98%]
+tests/test_risk.py::TestRiskEndpoints::test_quick_endpoint_returns_200 PASSED [ 99%]
+tests/test_risk.py::TestRiskEndpoints::test_quick_has_units PASSED       [ 99%]
+tests/test_risk.py::TestRiskEndpoints::test_atr_stops_endpoint PASSED    [ 99%]
+tests/test_risk.py::TestRiskEndpoints::test_atr_stops_has_stop_and_target PASSED [100%]
+
+=============================== warnings summary ===============================
+core/config.py:6
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/core/config.py:6: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class Settings(BaseSettings):
+
+tests/test_database.py: 24 warnings
+tests/test_repositories.py: 60 warnings
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py:3624: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+tests/test_database.py::TestTradeRepository::test_close_trade
+tests/test_repositories.py::TestTradeRepository::test_close_trade
+tests/test_repositories.py::TestTradeRepository::test_get_statistics
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/repositories/trade_repository.py:77: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    trade.closed_at = datetime.utcnow()
+
+tests/test_database.py::TestPredictionRepository::test_get_recent
+tests/test_repositories.py::TestPredictionRepository::test_get_recent_predictions
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/repositories/trade_repository.py:160: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    cutoff = datetime.utcnow() - timedelta(days=days)
+
+tests/test_explainer.py: 18 warnings
+tests/test_predict.py: 28 warnings
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but StandardScaler was fitted with feature names
+    warnings.warn(
+
+tests/test_repositories.py::TestPredictionRepository::test_create_prediction
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:178: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    prediction_date=datetime.utcnow(),
+
+tests/test_repositories.py::TestPredictionRepository::test_get_recent_predictions
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:193: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    prediction_date=datetime.utcnow()
+
+tests/test_repositories.py::TestPredictionRepository::test_get_recent_predictions
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:197: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    prediction_date=datetime.utcnow() - timedelta(days=10)  # Old
+
+tests/test_repositories.py::TestPredictionRepository::test_get_accuracy
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:209: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    prediction_date=datetime.utcnow(), correct=True
+
+tests/test_repositories.py::TestPredictionRepository::test_get_accuracy
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:213: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    prediction_date=datetime.utcnow(), correct=False
+
+tests/test_repositories.py::TestPredictionRepository::test_get_accuracy
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:217: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    prediction_date=datetime.utcnow(), correct=True
+
+tests/test_repositories.py::TestNewsArticleRepository::test_create_article
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:318: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    published_at=datetime.utcnow()
+
+tests/test_repositories.py::TestNewsArticleRepository::test_get_by_sentiment
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:329: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    source="Reuters", url="https://example1.com", published_at=datetime.utcnow()
+
+tests/test_repositories.py::TestNewsArticleRepository::test_get_by_sentiment
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:333: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    source="Reuters", url="https://example2.com", published_at=datetime.utcnow()
+
+tests/test_repositories.py::TestNewsArticleRepository::test_get_by_sentiment
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/repositories/news_repository.py:54: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    cutoff = datetime.utcnow() - timedelta(days=days)
+
+tests/test_repositories.py::TestNewsArticleRepository::test_get_sentiment_aggregate
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:344: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    source="Reuters", url="https://ex1.com", published_at=datetime.utcnow()
+
+tests/test_repositories.py::TestNewsArticleRepository::test_get_sentiment_aggregate
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:348: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    source="Reuters", url="https://ex2.com", published_at=datetime.utcnow()
+
+tests/test_repositories.py::TestNewsArticleRepository::test_get_sentiment_aggregate
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/tests/test_repositories.py:352: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    source="Reuters", url="https://ex3.com", published_at=datetime.utcnow()
+
+tests/test_repositories.py::TestNewsArticleRepository::test_get_sentiment_aggregate
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/repositories/news_repository.py:87: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    cutoff = datetime.utcnow() - timedelta(days=days)
+
+tests/test_repositories.py::TestFiidiiFlowRepository::test_get_net_trend
+  /Users/dhritismansarma/Desktop/Trade Analytics Platform/repositories/fiidii_repository.py:63: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    cutoff = datetime.utcnow() - timedelta(days=days)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+====================== 326 passed, 151 warnings in 27.42s ======================

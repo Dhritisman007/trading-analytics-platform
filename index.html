@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Analytics Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .status.healthy {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status.offline {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        .dot.healthy {
+            background: #4caf50;
+        }
+
+        .dot.offline {
+            background: #f44336;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .info {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .info h3 {
+            margin-bottom: 10px;
+            color: #1a1a1a;
+            font-size: 14px;
+        }
+
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .link-card {
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: 1px solid #e0e0e0;
+        }
+
+        .link-card:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .feature {
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .feature strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📈 Trade Analytics Platform</h1>
+        <p class="subtitle">AI-powered trading analysis for Indian markets</p>
+
+        <div class="status offline" id="status">
+            <span class="dot offline"></span>
+            <span>Frontend: Ready | Backend: Check below</span>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-primary" onclick="window.location.href='http://localhost:3003'">
+                🚀 Open Platform (Local)
+            </button>
+            <button class="btn-secondary" onclick="checkHealth()">
+                🔄 Check Backend
+            </button>
+        </div>
+
+        <div class="links">
+            <a href="http://localhost:8000/docs" class="link-card" target="_blank">
+                📚 API Docs
+            </a>
+            <a href="http://localhost:8000/health" class="link-card" target="_blank">
+                💚 Health Check
+            </a>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature">
+                <strong>📊 8 Pages</strong>
+                Dashboard, Indicators, Predict, Risk, Backtest, News, FII/DII, SMC
+            </div>
+            <div class="feature">
+                <strong>🤖 AI-Powered</strong>
+                ML predictions, sentiment analysis, risk scoring
+            </div>
+            <div class="feature">
+                <strong>⚡ Real-Time</strong>
+                Live price feeds, auto-refresh, WebSocket updates
+            </div>
+            <div class="feature">
+                <strong>🧪 Tested</strong>
+                326 tests passing, production-ready
+            </div>
+        </div>
+
+        <div class="info">
+            <h3>🚀 Getting Started</h3>
+            <p><strong>Local Development:</strong></p>
+            <p>Backend: <code>python main.py</code></p>
+            <p>Frontend: <code>cd frontend && npm run dev</code></p>
+            <p style="margin-top: 15px;"><strong>Docker Deployment:</strong></p>
+            <p><code>docker compose up --build</code></p>
+            <p style="margin-top: 15px;"><strong>Production:</strong></p>
+            <p>Deploy backend to AWS/Heroku and frontend to Vercel/Netlify</p>
+        </div>
+    </div>
+
+    <script>
+        function checkHealth() {
+            const statusEl = document.getElementById('status');
+            fetch('http://localhost:8000/health')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'healthy') {
+                        statusEl.innerHTML = '<span class="dot healthy"></span><span>✅ Backend Healthy!</span>';
+                        statusEl.className = 'status healthy';
+                    }
+                })
+                .catch(() => {
+                    statusEl.innerHTML = '<span class="dot offline"></span><span>❌ Backend Offline</span>';
+                    statusEl.className = 'status offline';
+                });
+        }
+
+        // Check health on load
+        window.addEventListener('load', checkHealth);
+    </script>
+</body>
+</html>

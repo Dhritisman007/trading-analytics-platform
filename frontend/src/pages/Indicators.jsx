@@ -10,7 +10,7 @@ import MACDChart        from '../components/charts/MACDChart'
 import IndicatorCard    from '../components/panels/IndicatorCard'
 import SymbolSelector   from '../components/ui/SymbolSelector'
 import WindowSelector   from '../components/ui/WindowSelector'
-import { RSIBadge, EMABadge, MACDBadge } from '../components/ui/Signalbadge'
+import { RSIBadge, EMABadge, MACDBadge } from '../components/ui/SignalBadge'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { ErrorMessage }   from '../components/ui/ErrorMessage'
 

@@ -54,8 +54,7 @@ function SignalPill({ label, color, bg, tip }) {
   )
 }
 
-// ── Generic action badge (buy / sell / hold) used by FII-DII components ──────
-
+// Generic action badge (buy / sell / hold) used by FII-DII components
 const ACTION_MAP = {
   buy: { label: 'BUY', color: '#1D9E75', bg: '#E1F5EE' },
   sell: { label: 'SELL', color: '#E24B4A', bg: '#FCEBEB' },

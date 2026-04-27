@@ -1,5 +1,6 @@
 # database/engine.py
 
+import os
 import logging
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
@@ -7,14 +8,37 @@ from core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# SQLAlchemy engine — connection pool shared across all requests
-engine = create_engine(
-    settings.database_url,
-    pool_size=5,          # maintain 5 connections in pool
-    max_overflow=10,      # allow 10 extra connections under load
-    pool_pre_ping=True,   # verify connections before using
-    echo=False,           # set True to log all SQL (useful for debugging)
-)
+
+def _get_database_url() -> str:
+    """
+    Railway provides DATABASE_URL with postgres:// prefix.
+    SQLAlchemy needs postgresql://
+    Fix it automatically.
+    """
+    url = settings.database_url or os.environ.get("DATABASE_URL", "")
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    return url
+
+
+db_url = _get_database_url()
+
+if db_url:
+    # SQLAlchemy engine — connection pool shared across all requests
+    engine = create_engine(
+        db_url,
+        pool_size=5,          # maintain 5 connections in pool
+        max_overflow=10,      # allow 10 extra connections under load
+        pool_pre_ping=True,   # verify connections before using
+        echo=False,           # set True to log all SQL (useful for debugging)
+    )
+else:
+    # No database configured — use SQLite as fallback
+    engine = create_engine(
+        "sqlite:///./trading.db",
+        connect_args={"check_same_thread": False},
+    )
+    logger.warning("No DATABASE_URL — using SQLite fallback")
 
 # Session factory — use this to create DB sessions
 SessionLocal = sessionmaker(
