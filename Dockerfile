@@ -1,4 +1,5 @@
-# Dockerfile
+# Dockerfile — replace the CMD line at the bottom
+
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -16,10 +17,10 @@ COPY . .
 
 RUN mkdir -p models
 
-# Railway sets PORT dynamically
-EXPOSE $PORT
+EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
     CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
+# Use shell form (not exec form) so $PORT expands correctly
 CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
