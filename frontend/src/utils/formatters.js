@@ -90,3 +90,18 @@ export const getSignalColor = (signal) => {
   if (signal === 'SELL' || signal.includes('BEARISH')) return '#E24B4A'
   return '#BA7517'
 }
+
+// ── Chart data utilities ──────────────────────────────────────────────────────
+
+export const cleanChartData = (data) => {
+  if (!data?.length) return []
+  const seen = new Set()
+  return data
+    .sort((a, b) => (a.time > b.time ? 1 : -1))
+    .filter((d) => {
+      if (!d.time) return false
+      if (seen.has(d.time)) return false
+      seen.add(d.time)
+      return true
+    })
+}

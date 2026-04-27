@@ -86,3 +86,8 @@ cache = TTLCache()
 def get_cache_stats() -> dict:
     """Wrapper function to get cache stats from the global cache instance."""
     return cache.stats()
+
+
+def clear_all() -> None:
+    """Clear every entry from the global cache instance."""
+    cache.clear()

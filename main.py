@@ -29,6 +29,7 @@ try:
     from routers import (
         auth_upstox,
         backtest,
+        cache,
         fii_dii,
         fvg,
         indicators,
@@ -160,6 +161,7 @@ if ROUTERS_LOADED:
     app.include_router(fii_dii.router)      # GET /fii-dii/
     app.include_router(live.router)         # GET /live/ + WS /live/ws/feed
     app.include_router(auth_upstox.router)  # GET /auth/upstox/
+    app.include_router(cache.router)        # GET /cache/stats  DELETE /cache/clear
     logger.info("All routers registered")
 else:
     logger.error("Routers failed to load — API endpoints unavailable")

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { createChart, ColorType, CrosshairMode, CandlestickSeries, LineSeries, HistogramSeries } from 'lightweight-charts'
 import { CHART_COLORS } from '../../utils/constants'
+import { cleanChartData } from '../../utils/formatters'
 
 export default function CandlestickChart({
   data         = [],
@@ -74,14 +75,17 @@ export default function CandlestickChart({
       wickDownColor:    CHART_COLORS.bearish,
     })
 
-    // Convert data to lightweight-charts format
-    const candleData = data.map((d) => ({
-      time:  d.date,
-      open:  d.open,
-      high:  d.high,
-      low:   d.low,
-      close: d.close,
-    }))
+    // Convert data to lightweight-charts format with deduplication
+    const candleData = cleanChartData(
+      data.map((d) => ({
+        time:  d.date,
+        open:  d.open,
+        high:  d.high,
+        low:   d.low,
+        close: d.close,
+      }))
+    )
+    
     candleSeries.setData(candleData)
     candleRef.current = candleSeries
 
@@ -96,6 +100,9 @@ export default function CandlestickChart({
       const emaFormatted = emaData
         .filter((d) => d.ema != null)
         .map((d) => ({ time: d.date, value: d.ema }))
+        .filter((d, i, arr) => i === 0 || d.time !== arr[i - 1].time)  // deduplicate
+        .sort((a, b) => (a.time > b.time ? 1 : -1))
+      
       emaSeries.setData(emaFormatted)
       emaRef.current = emaSeries
     }
