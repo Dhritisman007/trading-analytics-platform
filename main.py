@@ -67,9 +67,19 @@ app = FastAPI(
 register_error_handlers(app)
 
 app.add_middleware(RequestLoggingMiddleware)
+# Allow all origins in production (Railway, Vercel, etc.)
+# Restrict this to specific domains once your frontend URL is known
+CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    os.environ.get("FRONTEND_URL", ""),
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[o for o in CORS_ORIGINS if o] or ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -86,6 +96,12 @@ app.include_router(fii_dii.router)
 app.include_router(live.router)
 app.include_router(auth_upstox.router)
 app.include_router(cache.router)
+
+
+@app.get("/ping", tags=["Health"])
+def ping():
+    """Lightweight health check for Railway — never fails."""
+    return {"status": "ok"}
 
 
 @app.get("/", tags=["Health"])
