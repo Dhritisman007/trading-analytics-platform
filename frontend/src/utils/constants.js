@@ -47,3 +47,15 @@ export const CHART_COLORS = {
 }
 
 export const WS_URL = 'ws://127.0.0.1:8000/live/ws/feed'
+
+export const NEWS_SOURCES = [
+  { value: null,                  label: 'All sources' },
+  { value: 'Moneycontrol',        label: 'Moneycontrol' },
+  { value: 'Economic Times',      label: 'Economic Times' },
+  { value: 'LiveMint',            label: 'LiveMint' },
+  { value: 'BusinessLine',        label: 'BusinessLine' },
+  { value: 'CNBC TV18',           label: 'CNBC TV18' },
+  { value: 'NSE India',           label: 'NSE India' },
+  { value: 'Business Standard',   label: 'Business Standard' },
+  { value: 'Financial Express',   label: 'Financial Express' },
+]

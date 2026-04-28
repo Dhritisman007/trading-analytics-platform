@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 # Indian financial news RSS feeds — no API key needed
 RSS_FEEDS = [
     {
-        "name":   "Economic Times — Markets",
-        "url":    "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms",
-        "source": "Economic Times",
+        "name":   "Moneycontrol — Latest News",
+        "url":    "https://www.moneycontrol.com/rss/latestnews.xml",
+        "source": "Moneycontrol",
     },
     {
         "name":   "Moneycontrol — Markets",
@@ -29,14 +29,39 @@ RSS_FEEDS = [
         "source": "Moneycontrol",
     },
     {
-        "name":   "LiveMint — Markets",
+        "name":   "Economic Times — Markets",
+        "url":    "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms",
+        "source": "Economic Times",
+    },
+    {
+        "name":   "Mint — Markets",
         "url":    "https://www.livemint.com/rss/markets",
         "source": "LiveMint",
+    },
+    {
+        "name":   "Hindu BusinessLine — Markets",
+        "url":    "https://www.thehindubusinessline.com/markets/?service=rss",
+        "source": "BusinessLine",
+    },
+    {
+        "name":   "CNBC TV18 — Markets",
+        "url":    "https://www.cnbctv18.com/commonfeeds/v1/eng/rss/market.xml",
+        "source": "CNBC TV18",
+    },
+    {
+        "name":   "NSE India — Circulars",
+        "url":    "https://www.nseindia.com/rss/rssresearch.xml",
+        "source": "NSE India",
     },
     {
         "name":   "Business Standard — Markets",
         "url":    "https://www.business-standard.com/rss/markets-106.rss",
         "source": "Business Standard",
+    },
+    {
+        "name":   "Financial Express — Market",
+        "url":    "https://www.financialexpress.com/market/feed/",
+        "source": "Financial Express",
     },
 ]
 
@@ -145,17 +170,39 @@ def _parse_rss_entry(entry: Any, source: str) -> dict | None:
 def fetch_rss_news(max_per_feed: int = 10) -> list[dict]:
     """
     Fetch articles from all configured RSS feeds.
-    Runs synchronously — called by the scheduler.
+    Uses a browser User-Agent to bypass sites that block feedparser's default UA.
+    Falls back to direct feedparser if the HTTP request fails.
     """
+    import requests as _requests
+
+    _HEADERS = {
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/rss+xml, application/xml, text/xml, */*",
+    }
+
     all_articles = []
-    seen_titles  = set()  # deduplication
+    seen_titles  = set()
 
     for feed_config in RSS_FEEDS:
         try:
-            logger.debug(f"Fetching RSS: {feed_config['name']}")
-            feed     = feedparser.parse(feed_config["url"])
-            count    = 0
+            logger.debug(f"Fetching: {feed_config['name']}")
 
+            # Fetch raw XML with browser headers; fall back to direct feedparser
+            try:
+                response = _requests.get(
+                    feed_config["url"],
+                    headers=_HEADERS,
+                    timeout=10,
+                )
+                feed = feedparser.parse(response.content)
+            except Exception:
+                feed = feedparser.parse(feed_config["url"])
+
+            count = 0
             for entry in feed.entries:
                 if count >= max_per_feed:
                     break
@@ -164,7 +211,6 @@ def fetch_rss_news(max_per_feed: int = 10) -> list[dict]:
                 if not article:
                     continue
 
-                # Skip duplicates by title similarity
                 title_key = article["title"][:50].lower()
                 if title_key in seen_titles:
                     continue
@@ -173,12 +219,13 @@ def fetch_rss_news(max_per_feed: int = 10) -> list[dict]:
                 all_articles.append(article)
                 count += 1
 
+            logger.info(f"  {feed_config['name']}: {count} articles")
+
         except Exception as e:
             logger.warning(f"Failed to fetch {feed_config['name']}: {e}")
 
-    # Sort newest first
     all_articles.sort(key=lambda x: x["published_at"], reverse=True)
-    logger.info(f"Fetched {len(all_articles)} articles from {len(RSS_FEEDS)} feeds")
+    logger.info(f"Total: {len(all_articles)} articles from {len(RSS_FEEDS)} feeds")
     return all_articles
 
 

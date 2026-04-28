@@ -11,6 +11,7 @@ import MarketMoodBadge    from '../components/ui/MarketMoodBadge'
 import TopicFilter        from '../components/ui/TopicFilter'
 import { LoadingSpinner } from '../components/ui/LoadingSpinner'
 import { ErrorMessage }   from '../components/ui/ErrorMessage'
+import { NEWS_SOURCES }   from '../utils/constants'
 
 const SentimentFilter = ({ active, onChange }) => {
   const opts = [
@@ -46,20 +47,22 @@ const SentimentFilter = ({ active, onChange }) => {
 export default function News() {
   const [topic,     setTopic]     = useState(null)
   const [sentiment, setSentiment] = useState(null)
+  const [source,    setSource]    = useState(null)
 
   const {
     data:      newsData,
     isLoading: newsLoading,
     error:     newsError,
     refetch:   newsRefetch,
-  } = useNews(40, topic)
+  } = useNews(40, topic, source)
 
   const { data: mood }    = useMarketMood()
   const { data: fiiData } = useFiiDii(30)
 
-  // Client-side sentiment filter on top of topic filter
+  // Client-side sentiment filter on top of topic + source filters
   const articles = (newsData?.articles || []).filter((a) =>
-    !sentiment || a.sentiment?.label === sentiment
+    (!sentiment || a.sentiment?.label === sentiment) &&
+    (!source    || a.source === source)
   )
 
   return (
@@ -131,6 +134,45 @@ export default function News() {
                 Filter by sentiment
               </p>
               <SentimentFilter active={sentiment} onChange={setSentiment} />
+            </div>
+            <div>
+              <p style={{
+                fontSize:      '10px',
+                fontWeight:    '500',
+                color:         'var(--color-text-tertiary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                margin:        '0 0 6px',
+              }}>
+                Filter by source
+              </p>
+              <div style={{
+                display:  'flex',
+                gap:      '6px',
+                flexWrap: 'wrap',
+              }}>
+                {NEWS_SOURCES.map(({ value, label }) => (
+                  <button
+                    key={String(value)}
+                    onClick={() => setSource(source === value ? null : value)}
+                    style={{
+                      fontSize:     '11px',
+                      padding:      '4px 10px',
+                      borderRadius: '20px',
+                      border:       '0.5px solid var(--color-border-tertiary)',
+                      background:   source === value
+                        ? 'var(--color-text-primary)'
+                        : 'var(--color-background-secondary)',
+                      color: source === value
+                        ? 'var(--color-background-primary)'
+                        : 'var(--color-text-secondary)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

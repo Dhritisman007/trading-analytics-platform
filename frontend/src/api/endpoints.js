@@ -84,9 +84,14 @@ export const backtestApi = {
 
 // ── News & sentiment ──────────────────────────────────────────────────────────
 export const newsApi = {
-  getAll: (limit = 20, topic = null, sentiment = null) =>
+  getAll: (limit = 20, topic = null, sentiment = null, source = null) =>
     client.get('/news/', {
-      params: { limit, topic, sentiment },
+      params: {
+        limit,
+        ...(topic     && { topic }),
+        ...(sentiment && { sentiment }),
+        ...(source    && { source }),
+      },
     }),
 
   getMood: () =>
