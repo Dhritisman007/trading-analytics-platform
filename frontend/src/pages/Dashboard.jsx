@@ -5,6 +5,7 @@ import { useMarket }             from '../hooks/useMarket'
 import { useIndicators, useLatestSignals } from '../hooks/useIndicators'
 import { useFiiDiiToday }        from '../hooks/useFiiDii'
 import { useMarketMood }         from '../hooks/useNews'
+import { useOpenFvgs }           from '../hooks/useFvg'
 
 import CandlestickChart  from '../components/charts/CandlestickChart'
 import ChartToolbar      from '../components/charts/ChartToolbar'
@@ -23,7 +24,7 @@ import {
 
 export default function Dashboard() {
   const [symbol,   setSymbol]   = useState('^NSEI')
-  const [period,   setPeriod]   = useState('3mo')
+  const [period,   setPeriod]   = useState('1y')
   const [interval, setInterval] = useState('1d')
   const [overlays, setOverlays] = useState({
     ema:    true,
@@ -34,7 +35,7 @@ export default function Dashboard() {
 
   // Data hooks
   const { data: market,     isLoading: mLoading, error: mError, refetch } =
-    useMarket(symbol, period)
+    useMarket(symbol, period, interval)
   const { data: indicators, isLoading: iLoading } =
     useIndicators(symbol, period)
   const { data: signals } =
@@ -43,6 +44,8 @@ export default function Dashboard() {
     useFiiDiiToday()
   const { data: mood } =
     useMarketMood()
+  const { data: fvgData } =
+    useOpenFvgs(symbol)
 
   const handleOverlayToggle = useCallback((key) => {
     setOverlays((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -60,6 +63,7 @@ export default function Dashboard() {
   const fii      = fiiToday?.fii      || {}
   const dii      = fiiToday?.dii      || {}
   const signal   = fiiToday?.signal   || {}
+  const fvgZones = fvgData?.fvgs      || []
 
   return (
     <div>
@@ -161,6 +165,7 @@ export default function Dashboard() {
         <CandlestickChart
           data={candles}
           emaData={indData}
+          fvgZones={fvgZones}
           showVolume={overlays.volume}
           showEMA={overlays.ema}
           showFVG={overlays.fvg}
@@ -331,6 +336,87 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* ── FVG summary panel ────────────────────────────────────── */}
+      {fvgZones.length > 0 && (
+        <div style={{
+          background:   'var(--color-background-primary)',
+          border:       '0.5px solid var(--color-border-tertiary)',
+          borderRadius: 'var(--border-radius-lg)',
+          padding:      '1rem 1.25rem',
+          marginTop:    '10px',
+        }}>
+          <p style={{
+            fontSize:   '13px',
+            fontWeight: '500',
+            margin:     '0 0 12px',
+            color:      'var(--color-text-primary)',
+          }}>
+            Open Fair Value Gaps ({fvgZones.length})
+          </p>
+
+          <div style={{
+            display:             'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gap:                 '8px',
+          }}>
+            {fvgZones.slice(0, 6).map((fvg, i) => {
+              const isBull = fvg.type === 'bullish'
+              const color  = isBull ? '#1D9E75' : '#E24B4A'
+              return (
+                <div key={i} style={{
+                  background:   isBull ? '#E1F5EE' : '#FCEBEB',
+                  border:       `0.5px solid ${color}44`,
+                  borderRadius: 'var(--border-radius-md)',
+                  padding:      '10px 12px',
+                }}>
+                  <div style={{
+                    display:        'flex',
+                    justifyContent: 'space-between',
+                    alignItems:     'center',
+                    marginBottom:   '4px',
+                  }}>
+                    <span style={{ fontSize: '11px', fontWeight: '600', color }}>
+                      {isBull ? '▲ Bullish' : '▼ Bearish'} FVG
+                    </span>
+                    <span style={{
+                      fontSize:     '10px',
+                      padding:      '1px 6px',
+                      borderRadius: '10px',
+                      background:   `${color}20`,
+                      color,
+                    }}>
+                      {fvg.strength || 'open'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--color-text-primary)', fontWeight: '500' }}>
+                    {fvg.gap_bottom?.toFixed(1)} – {fvg.gap_top?.toFixed(1)}
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', marginTop: '2px' }}>
+                    {fvg.candle_3}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {fvgData?.nearest_open_fvg && (
+            <div style={{
+              marginTop:  '10px',
+              paddingTop: '10px',
+              borderTop:  '0.5px solid var(--color-border-tertiary)',
+              fontSize:   '12px',
+              color:      'var(--color-text-secondary)',
+            }}>
+              <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>
+                Nearest zone:{' '}
+              </span>
+              {fvgData.nearest_open_fvg.gap_bottom?.toFixed(1)}–{fvgData.nearest_open_fvg.gap_top?.toFixed(1)}
+              {' · '}{fvgData.nearest_open_fvg.type} · strength: {fvgData.nearest_open_fvg.strength}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

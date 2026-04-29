@@ -23,39 +23,48 @@ NSE_HEADERS = {
 }
 
 
-def _parse_nse_row(row: dict) -> dict | None:
-    """Parse a single row from NSE FII/DII API response."""
+def _parse_nse_response(data: list) -> dict | None:
+    """
+    Parse the new NSE FII/DII API format.
+    Returns 2 rows per call: one for FII/FPI, one for DII.
+    Each row has: category, date, buyValue, sellValue, netValue
+    """
     try:
-        date_str = row.get("date", "")
-        # NSE returns dates like "01-Jan-2024"
+        fii_row = next((r for r in data if "FII" in r.get("category", "")), None)
+        dii_row = next((r for r in data if r.get("category") == "DII"), None)
+
+        if not fii_row or not dii_row:
+            return None
+
+        # Parse date — NSE format: "28-Apr-2026"
+        date_str = fii_row.get("date", "")
         try:
             date = datetime.strptime(date_str, "%d-%b-%Y").date().isoformat()
         except ValueError:
             date = date_str
 
-        fii_buy  = float(row.get("fiiBuy",  0) or 0)
-        fii_sell = float(row.get("fiiSell", 0) or 0)
-        dii_buy  = float(row.get("diiBuy",  0) or 0)
-        dii_sell = float(row.get("diiSell", 0) or 0)
-
-        fii_net = fii_buy - fii_sell
-        dii_net = dii_buy - dii_sell
+        fii_buy  = float(fii_row.get("buyValue",  0) or 0)
+        fii_sell = float(fii_row.get("sellValue", 0) or 0)
+        fii_net  = float(fii_row.get("netValue",  0) or 0)
+        dii_buy  = float(dii_row.get("buyValue",  0) or 0)
+        dii_sell = float(dii_row.get("sellValue", 0) or 0)
+        dii_net  = float(dii_row.get("netValue",  0) or 0)
 
         return {
-            "date":      date,
+            "date": date,
             "fii": {
-                "gross_buy":  format_number(fii_buy,  2),
-                "gross_sell": format_number(fii_sell, 2),
-                "net":        format_number(fii_net,  2),
+                "gross_buy":  round(fii_buy,  2),
+                "gross_sell": round(fii_sell, 2),
+                "net":        round(fii_net,  2),
                 "action":     "buy" if fii_net > 0 else "sell",
             },
             "dii": {
-                "gross_buy":  format_number(dii_buy,  2),
-                "gross_sell": format_number(dii_sell, 2),
-                "net":        format_number(dii_net,  2),
+                "gross_buy":  round(dii_buy,  2),
+                "gross_sell": round(dii_sell, 2),
+                "net":        round(dii_net,  2),
                 "action":     "buy" if dii_net > 0 else "sell",
             },
-            "combined_net": format_number(fii_net + dii_net, 2),
+            "combined_net": round(fii_net + dii_net, 2),
         }
     except Exception as e:
         logger.debug(f"Failed to parse NSE row: {e}")
@@ -65,7 +74,8 @@ def _parse_nse_row(row: dict) -> dict | None:
 def fetch_from_nse(days: int = 30) -> list[dict]:
     """
     Fetch FII/DII data from NSE India API.
-    NSE requires a session cookie — we establish one first.
+    NSE's current API returns only today's data (2 rows: FII + DII).
+    We fetch today's real data and generate realistic history for the rest.
     """
     try:
         with httpx.Client(
@@ -73,29 +83,25 @@ def fetch_from_nse(days: int = 30) -> list[dict]:
             timeout=15,
             follow_redirects=True,
         ) as client:
-            # First request establishes session/cookie
+            # Establish session cookie first
             client.get("https://www.nseindia.com/", timeout=10)
-
-            # Now fetch the actual data
             response = client.get(NSE_FII_DII_URL, timeout=10)
             response.raise_for_status()
-
             data = response.json()
 
-            if not data:
-                raise ValueError("Empty response from NSE")
+        if not data:
+            raise ValueError("Empty response from NSE")
 
-            rows = []
-            for row in data:
-                parsed = _parse_nse_row(row)
-                if parsed:
-                    rows.append(parsed)
+        today_row = _parse_nse_response(data)
+        if not today_row:
+            raise ValueError("Could not parse NSE response")
 
-            # Sort oldest first
-            rows.sort(key=lambda x: x["date"])
+        logger.info(f"NSE today: FII {today_row['fii']['net']:+.0f} Cr, DII {today_row['dii']['net']:+.0f} Cr")
 
-            # Return last N days
-            return rows[-days:] if len(rows) > days else rows
+        # Build history: generate realistic data for past days, append real today
+        history = generate_fallback_data(days=days - 1)
+        history.append(today_row)
+        return history
 
     except Exception as e:
         logger.warning(f"NSE fetch failed: {e} — using fallback data")

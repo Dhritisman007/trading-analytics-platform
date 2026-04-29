@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     )
     upstox_access_token: str = Field(default="", alias="UPSTOX_ACCESS_TOKEN")
 
+    # NewsAPI
+    newsapi_key: str = Field(default="", alias="NEWSAPI_KEY")
+
     class Config:
         env_file = ".env"
         case_sensitive = False

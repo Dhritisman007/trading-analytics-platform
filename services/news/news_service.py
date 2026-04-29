@@ -3,7 +3,7 @@
 import logging
 from datetime import datetime, timezone
 
-from services.news.news_fetcher import fetch_rss_news, fetch_newsapi
+from services.news.news_fetcher import fetch_all_news
 from services.news.sentiment_analyzer import analyze_batch
 from core.cache import cache
 
@@ -98,35 +98,16 @@ def get_news(
 
 
 def _fetch_and_cache() -> dict:
-    """
-    Fetch fresh news from all sources and store in cache.
-    Called by scheduler every 15 minutes and on cache miss.
-    """
+    """Fetch fresh news from all sources and store in cache."""
     logger.info("Fetching fresh news from all sources...")
 
-    # Fetch from all sources
-    rss_articles  = fetch_rss_news(max_per_feed=10)
-    api_articles  = fetch_newsapi(max_articles=20)
-
-    # Combine and deduplicate
-    seen   = set()
-    merged = []
-    for article in rss_articles + api_articles:
-        key = article["title"][:50].lower()
-        if key not in seen:
-            seen.add(key)
-            merged.append(article)
-
-    # Sort newest first
-    merged.sort(key=lambda x: x.get("published_at", ""), reverse=True)
+    merged = fetch_all_news()
 
     result = {
         "articles":   merged,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
         "sources": {
-            "rss":     len(rss_articles),
-            "newsapi": len(api_articles),
-            "total":   len(merged),
+            "total": len(merged),
         },
     }
 

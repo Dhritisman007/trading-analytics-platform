@@ -17,6 +17,7 @@ import { predictApi }       from '../api/endpoints'
 
 export default function Predict() {
   const [symbol, setSymbol] = useState('^NSEI')
+  const [period, setPeriod] = useState('2y')
   const queryClient         = useQueryClient()
 
   const {
@@ -28,12 +29,12 @@ export default function Predict() {
 
   // Train mutation
   const trainMutation = useMutation({
-    mutationFn: () => predictApi.train(symbol, '2y'),
+    mutationFn: () => predictApi.train(symbol, period),
     onSuccess:  () => {
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['predict', symbol] })
         refetch()
-      }, 15000)  // wait 15s for training to complete
+      }, 15000)
     },
   })
 
@@ -60,9 +61,9 @@ export default function Predict() {
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <SymbolSelector
             symbol={symbol}
-            period="2y"
+            period={period}
             onSymbolChange={setSymbol}
-            onPeriodChange={() => {}}
+            onPeriodChange={setPeriod}
           />
           <button
             onClick={() => trainMutation.mutate()}
@@ -93,7 +94,7 @@ export default function Predict() {
           color:        'var(--color-text-secondary)',
           marginBottom: '10px',
         }}>
-          Training model on 2 years of Nifty 50 data...
+          Training model on {period} of data for {symbol}...
           this takes about 10–15 seconds.
         </div>
       )}

@@ -26,7 +26,7 @@ const EXPLAINERS = {
 
 export default function Indicators() {
   const [symbol,    setSymbol]    = useState('^NSEI')
-  const [period,    setPeriod]    = useState('3mo')
+  const [period,    setPeriod]    = useState('1y')
   const [rsiWindow, setRsiWindow] = useState(14)
   const [emaWindow, setEmaWindow] = useState(20)
 
