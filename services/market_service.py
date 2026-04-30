@@ -17,19 +17,42 @@ KNOWN_SYMBOLS = {
 }
 
 
-def validate_params(period: str, interval: str) -> None:
-    allowed_periods = {"1mo", "3mo", "6mo", "1y", "2y", "5y"}
-    allowed_intervals = {"1d", "1wk", "1mo"}
+# Intraday intervals and the maximum period yfinance allows for each
+INTRADAY_INTERVAL_PERIODS = {
+    "1m":  {"max_days": 7,   "allowed_periods": {"1d", "5d"}},
+    "2m":  {"max_days": 60,  "allowed_periods": {"1d", "5d", "1mo", "3mo"}},
+    "5m":  {"max_days": 60,  "allowed_periods": {"1d", "5d", "1mo", "3mo"}},
+    "15m": {"max_days": 60,  "allowed_periods": {"1d", "5d", "1mo", "3mo"}},
+    "30m": {"max_days": 60,  "allowed_periods": {"1d", "5d", "1mo", "3mo"}},
+    "60m": {"max_days": 730, "allowed_periods": {"1d", "5d", "1mo", "3mo", "6mo", "1y", "2y"}},
+    "1h":  {"max_days": 730, "allowed_periods": {"1d", "5d", "1mo", "3mo", "6mo", "1y", "2y"}},
+    "4h":  {"max_days": 730, "allowed_periods": {"1d", "5d", "1mo", "3mo", "6mo", "1y", "2y"}},
+}
 
-    if period not in allowed_periods:
+DAILY_INTERVALS   = {"1d", "1wk", "1mo"}
+DAILY_PERIODS     = {"1mo", "3mo", "6mo", "1y", "2y", "5y"}
+INTRADAY_PERIODS  = {"1d", "5d", "1mo", "3mo", "6mo", "1y", "2y"}
+
+
+def validate_params(period: str, interval: str) -> None:
+    if interval in DAILY_INTERVALS:
+        if period not in DAILY_PERIODS:
+            raise InvalidParameterError(
+                param="period", value=period,
+                reason=f"For {interval} interval, valid periods: {DAILY_PERIODS}"
+            )
+    elif interval in INTRADAY_INTERVAL_PERIODS:
+        allowed = INTRADAY_INTERVAL_PERIODS[interval]["allowed_periods"]
+        if period not in allowed:
+            raise InvalidParameterError(
+                param="period", value=period,
+                reason=f"For {interval} interval, valid periods: {allowed}"
+            )
+    else:
+        all_intervals = DAILY_INTERVALS | set(INTRADAY_INTERVAL_PERIODS.keys())
         raise InvalidParameterError(
-            param="period", value=period, reason=f"Valid options: {allowed_periods}"
-        )
-    if interval not in allowed_intervals:
-        raise InvalidParameterError(
-            param="interval",
-            value=interval,
-            reason=f"Valid options: {allowed_intervals}",
+            param="interval", value=interval,
+            reason=f"Valid options: {all_intervals}"
         )
 
 

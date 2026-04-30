@@ -14,7 +14,7 @@ from core.logging_config import setup_logging
 from core.middleware import RequestLoggingMiddleware
 from core.scheduler import get_scheduler_status, start_scheduler, stop_scheduler
 from core.database import init_db
-from routers import auth_upstox, backtest, cache, fii_dii, fvg, indicators, live, market, news, predict, risk
+from routers import auth_upstox, backtest, cache, fii_dii, fvg, indicators, live, market, news, predict, risk, options
 from services.websocket_manager import is_connected, start_websocket_feed, stop_websocket_feed
 
 setup_logging(debug=settings.debug)
@@ -96,6 +96,7 @@ app.include_router(fii_dii.router)
 app.include_router(live.router)
 app.include_router(auth_upstox.router)
 app.include_router(cache.router)
+app.include_router(options.router)
 
 
 @app.get("/ping", tags=["Health"])

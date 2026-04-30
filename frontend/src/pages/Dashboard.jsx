@@ -33,6 +33,12 @@ export default function Dashboard() {
   })
   const [hoveredCandle, setHoveredCandle] = useState(null)
 
+  // ChartToolbar now passes (interval, recommendedPeriod)
+  const handleIntervalChange = useCallback((newInterval, newPeriod) => {
+    setInterval(newInterval)
+    if (newPeriod) setPeriod(newPeriod)
+  }, [])
+
   // Data hooks
   const { data: market,     isLoading: mLoading, error: mError, refetch } =
     useMarket(symbol, period, interval)
@@ -158,7 +164,7 @@ export default function Dashboard() {
         <ChartToolbar
           interval={interval}
           overlays={overlays}
-          onIntervalChange={setInterval}
+          onIntervalChange={handleIntervalChange}
           onOverlayToggle={handleOverlayToggle}
         />
 
@@ -170,6 +176,7 @@ export default function Dashboard() {
           showEMA={overlays.ema}
           showFVG={overlays.fvg}
           height={380}
+          isIntraday={!['1d','1wk','1mo'].includes(interval)}
           onCrosshair={setHoveredCandle}
         />
 

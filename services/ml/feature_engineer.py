@@ -172,7 +172,16 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     # ── Target: BUY if next day's close is higher, SELL otherwise ─────────
     df["target"] = (df["close"].shift(-1) > df["close"]).astype(int)
     
-    # ── Clean up: Drop NaN rows (caused by rolling windows) ────────────────
-    df = df.dropna(subset=FEATURE_COLUMNS + ["target"])
-    
+    # ── Clean up NaN: fill with time-series continuity, not hard drop ──────
+    # Forward-fill: carry last known value forward (good for slowly-changing features)
+    # Backward-fill: fill remaining NaN at the start of the series
+    # Zero-fill: last resort for any remaining NaN
+    for col in FEATURE_COLUMNS:
+        if col in df.columns:
+            df[col] = df[col].ffill().bfill().fillna(0)
+
+    # Only drop rows where the target is NaN
+    # (target is NaN for the very last row — no next-day close yet)
+    df = df.dropna(subset=["target"])
+
     return df

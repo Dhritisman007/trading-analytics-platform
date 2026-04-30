@@ -1,9 +1,16 @@
 // src/components/charts/ChartToolbar.jsx
 
-const INTERVALS = [
-  { label: '1D', value: '1d' },
-  { label: '1W', value: '1wk' },
-  { label: '1M', value: '1mo' },
+// Timeframe groups
+const TIMEFRAMES = [
+  { label: '1m',  value: '1m',  period: '1d'  },
+  { label: '3m',  value: '2m',  period: '5d'  },   // yfinance has no 3m, use 2m
+  { label: '5m',  value: '5m',  period: '5d'  },
+  { label: '15m', value: '15m', period: '5d'  },
+  { label: '30m', value: '30m', period: '1mo' },
+  { label: '1H',  value: '60m', period: '1mo' },
+  { label: '4H',  value: '4h',  period: '3mo' },
+  { label: '1D',  value: '1d',  period: '1y'  },
+  { label: '1W',  value: '1wk', period: '2y'  },
 ]
 
 const OVERLAYS = [
@@ -20,7 +27,7 @@ export default function ChartToolbar({
 }) {
   const chipStyle = (active) => ({
     fontSize:     '11px',
-    padding:      '4px 10px',
+    padding:      '4px 9px',
     borderRadius: '20px',
     border:       '0.5px solid var(--color-border-tertiary)',
     background:   active
@@ -32,24 +39,30 @@ export default function ChartToolbar({
     cursor:       'pointer',
     fontWeight:   active ? '500' : '400',
     transition:   'all 0.15s',
+    whiteSpace:   'nowrap',
   })
+
+  const handleTimeframe = (tf) => {
+    // Pass both interval + the recommended period for that timeframe
+    onIntervalChange(tf.value, tf.period)
+  }
 
   return (
     <div style={{
       display:     'flex',
-      gap:         '6px',
+      gap:         '4px',
       alignItems:  'center',
       marginBottom: '12px',
       flexWrap:    'wrap',
     }}>
-      {/* Interval chips */}
-      {INTERVALS.map(({ label, value }) => (
+      {/* Timeframe chips */}
+      {TIMEFRAMES.map((tf) => (
         <button
-          key={value}
-          onClick={() => onIntervalChange(value)}
-          style={chipStyle(interval === value)}
+          key={tf.value}
+          onClick={() => handleTimeframe(tf)}
+          style={chipStyle(interval === tf.value)}
         >
-          {label}
+          {tf.label}
         </button>
       ))}
 
@@ -65,7 +78,7 @@ export default function ChartToolbar({
         <button
           key={key}
           onClick={() => onOverlayToggle(key)}
-          style={chipStyle(overlays[key])}
+          style={chipStyle(overlays?.[key])}
         >
           {label}
         </button>

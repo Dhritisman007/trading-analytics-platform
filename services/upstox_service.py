@@ -1,252 +1,414 @@
 # services/upstox_service.py
 
 """
-Upstox API integration for live market data.
-Fetches real-time OHLC data from Upstox instead of using deterministic stubs.
+Upstox API v2 integration — historical + intraday OHLC data.
+
+Endpoints used:
+  Historical (daily/weekly/monthly):
+    GET /v2/historical-candle/{instrumentKey}/{interval}/{toDate}/{fromDate}
+
+  Intraday — today's candles only:
+    GET /v2/historical-candle/intraday/{instrumentKey}/{interval}
+
+  Historical intraday (past days, not just today):
+    GET /v2/historical-candle/{instrumentKey}/{interval}/{toDate}/{fromDate}
+    with interval = "1minute", "5minute", etc.
+
+Interval names (Upstox):
+  "1minute", "3minute", "5minute", "10minute", "15minute",
+  "30minute", "60minute", "day", "week", "month"
+
+Historical intraday limit: max 30 days lookback for minute intervals,
+365 days for 60minute.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List
+from datetime import datetime, timedelta, timezone, date as date_type
+from typing import Dict
 
 import requests
 
+from utils.formatters import format_number
+
 logger = logging.getLogger(__name__)
 
-# Upstox API configuration
 UPSTOX_BASE_URL = "https://api.upstox.com/v2"
 
-# Symbol mapping: Upstox format → Display name
+# ── Symbol maps ───────────────────────────────────────────────────────────────
+# Upstox uses pipe-separated instrument keys for indices
 UPSTOX_SYMBOLS = {
-    "NSE_INDEX|Nifty 50": {"display_name": "Nifty 50", "short_code": "^NSEI"},
-    "BSE_INDEX|Sensex": {"display_name": "BSE Sensex", "short_code": "^BSESN"},
-    "NSE_INDEX|Nifty Bank": {"display_name": "Bank Nifty", "short_code": "^NSEBANK"},
+    "NSE_INDEX|Nifty 50":   {"display_name": "Nifty 50",    "short_code": "^NSEI"},
+    "NSE_INDEX|Nifty Bank": {"display_name": "Bank Nifty",  "short_code": "^NSEBANK"},
+    "BSE_INDEX|SENSEX":     {"display_name": "BSE Sensex",  "short_code": "^BSESN"},
 }
 
-# Reverse mapping for convenience
 SYMBOL_TO_UPSTOX = {v["short_code"]: k for k, v in UPSTOX_SYMBOLS.items()}
 
+# ── Interval mapping ───────────────────────────────────────────────────────────
+# Historical candle endpoint (/historical-candle/{symbol}/{interval}/{to}/{from})
+# Only these intervals are accepted:
+INTERVAL_MAP_HISTORICAL = {
+    "1m":  "1minute",
+    "30m": "30minute",
+    "1d":  "day",
+    "1wk": "week",
+    "1mo": "month",
+    # Approximations for unsupported intervals → closest available
+    "3m":  "1minute",   # use 1m, frontend can aggregate
+    "5m":  "1minute",   # use 1m
+    "10m": "1minute",
+    "15m": "1minute",
+    "60m": "30minute",  # use 30m
+    "1h":  "30minute",
+    "2h":  "30minute",
+    "4h":  "day",
+}
 
-def get_upstox_headers() -> dict:
-    """Build authorization headers for Upstox API requests."""
+# Intraday-today endpoint (/historical-candle/intraday/{symbol}/{interval})
+# Full interval support — today's data only
+INTERVAL_MAP_INTRADAY = {
+    "1m":  "1minute",
+    "3m":  "3minute",
+    "5m":  "5minute",
+    "10m": "10minute",
+    "15m": "15minute",
+    "30m": "30minute",
+    "60m": "60minute",
+    "1h":  "60minute",
+    "2h":  "60minute",
+    "4h":  "60minute",
+}
+
+# Unified map (historical takes priority — used for validation)
+INTERVAL_MAP = {**INTERVAL_MAP_HISTORICAL, **INTERVAL_MAP_INTRADAY}
+
+# Max lookback in days per interval (Upstox hard limits)
+INTERVAL_MAX_DAYS = {
+    "1minute":  30,
+    "3minute":  1,    # intraday-today only
+    "5minute":  1,    # intraday-today only
+    "10minute": 1,
+    "15minute": 1,
+    "30minute": 30,
+    "60minute": 1,    # intraday-today only
+    "day":      3650,
+    "week":     3650,
+    "month":    3650,
+}
+
+# Period string → days
+PERIOD_DAYS = {
+    "1d":  1,
+    "5d":  5,
+    "1mo": 30,
+    "3mo": 90,
+    "6mo": 180,
+    "1y":  365,
+    "2y":  730,
+    "5y":  1825,
+}
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _headers() -> dict:
     from core.config import settings
-
     return {
         "Authorization": f"Bearer {settings.upstox_access_token}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
+        "Accept":        "application/json",
     }
 
 
-def validate_upstox_credentials() -> bool:
-    """Verify that Upstox credentials are configured."""
+def _check_credentials() -> None:
     from core.config import settings
-
-    if not settings.upstox_api_key or not settings.upstox_access_token:
-        logger.error("Upstox credentials not configured. Check .env file.")
-        return False
-    return True
-
-
-def convert_period_to_days(period: str) -> int:
-    """
-    Convert period string to approximate number of days.
-
-    Args:
-        period: One of "1mo", "3mo", "6mo", "1y", "2y", "5y"
-
-    Returns:
-        Number of days
-    """
-    mapping = {
-        "1mo": 30,
-        "3mo": 90,
-        "6mo": 180,
-        "1y": 365,
-        "2y": 730,
-        "5y": 1825,
-    }
-    return mapping.get(period, 90)
-
-
-def fetch_upstox_historical_data(
-    symbol: str, period: str = "3mo", interval: str = "1d"
-) -> Dict:
-    """
-    Fetch historical OHLC data from Upstox API.
-
-    Args:
-        symbol: Short code like "^NSEI", "^BSESN", "^NSEBANK"
-        period: Time period (1mo, 3mo, 6mo, 1y, 2y, 5y)
-        interval: Candle interval (1d, 1wk, 1mo)
-
-    Returns:
-        Dict with OHLC data and metadata
-
-    Raises:
-        ValueError: If symbol is invalid or API request fails
-    """
-
-    if not validate_upstox_credentials():
-        raise ValueError("Upstox credentials not configured")
-
-    # Convert short code to Upstox format
-    if symbol not in SYMBOL_TO_UPSTOX:
+    if not settings.upstox_access_token:
         raise ValueError(
-            f"Unknown symbol: {symbol}. "
-            f"Valid symbols: {list(SYMBOL_TO_UPSTOX.keys())}"
+            "UPSTOX_ACCESS_TOKEN not set. "
+            "Visit http://127.0.0.1:8000/auth/upstox/login to generate a token, "
+            "then add it to your .env file and restart the server."
         )
 
-    upstox_symbol = SYMBOL_TO_UPSTOX[symbol]
-    display_name = UPSTOX_SYMBOLS[upstox_symbol]["display_name"]
 
-    # Calculate date range
-    days_back = convert_period_to_days(period)
-    to_date = datetime.now().date()
-    from_date = to_date - timedelta(days=days_back)
+def _upstox_key(symbol: str) -> str:
+    """Convert short code (^NSEI) to Upstox instrument key."""
+    if symbol not in SYMBOL_TO_UPSTOX:
+        raise ValueError(
+            f"Unknown symbol '{symbol}'. "
+            f"Valid: {list(SYMBOL_TO_UPSTOX.keys())}"
+        )
+    return SYMBOL_TO_UPSTOX[symbol]
 
-    # Map interval
-    interval_mapping = {"1d": "day", "1wk": "week", "1mo": "month"}
-    api_interval = interval_mapping.get(interval, "day")
+
+def _api_interval_intraday(interval: str) -> str:
+    """Map interval for the intraday-today endpoint (full set supported)."""
+    mapped = INTERVAL_MAP_INTRADAY.get(interval)
+    if not mapped:
+        raise ValueError(
+            f"Unsupported intraday interval '{interval}'. "
+            f"Valid: {list(INTERVAL_MAP_INTRADAY.keys())}"
+        )
+    return mapped
+
+
+def _api_interval_historical(interval: str) -> str:
+    """Map interval for the historical endpoint (limited set: 1minute/30minute/day/week/month)."""
+    mapped = INTERVAL_MAP_HISTORICAL.get(interval)
+    if not mapped:
+        raise ValueError(
+            f"Unsupported historical interval '{interval}'. "
+            f"Valid: {list(INTERVAL_MAP_HISTORICAL.keys())}"
+        )
+    return mapped
+
+
+def _api_interval(interval: str) -> str:
+    """General interval lookup — uses historical map as canonical."""
+    return INTERVAL_MAP.get(interval, "day")
+
+
+def _clamp_days(requested_days: int, api_interval: str) -> int:
+    """Clamp requested lookback to Upstox's hard limit for that interval."""
+    limit = INTERVAL_MAX_DAYS.get(api_interval, 30)
+    if requested_days > limit:
+        logger.warning(
+            f"Requested {requested_days} days but Upstox only supports "
+            f"{limit} days for {api_interval} interval. Clamping."
+        )
+        return limit
+    return requested_days
+
+
+def _parse_candles(candles: list, is_intraday: bool) -> list:
+    """
+    Convert Upstox candle arrays to our OHLCV dicts.
+
+    Upstox candle format: [timestamp, open, high, low, close, volume, oi]
+    timestamp is ISO-8601 with timezone: "2024-01-15T09:15:00+05:30"
+    """
+    data = []
+    for c in candles:
+        try:
+            ts_raw = c[0]
+            if is_intraday:
+                # Keep full datetime string for lightweight-charts unix conversion
+                # Strip timezone suffix so JS Date() parses cleanly
+                dt = datetime.fromisoformat(ts_raw)
+                # Send unix seconds for intraday — timezone-aware and
+                # lets the frontend display in any tz (we use IST)
+                date_str = int(dt.timestamp())
+            else:
+                dt = datetime.fromisoformat(ts_raw)
+                date_str = dt.strftime("%Y-%m-%d")
+
+            data.append({
+                "date":   date_str,
+                "open":   format_number(float(c[1])),
+                "high":   format_number(float(c[2])),
+                "low":    format_number(float(c[3])),
+                "close":  format_number(float(c[4])),
+                "volume": int(c[5]),
+            })
+        except Exception as e:
+            logger.warning(f"Skipping malformed candle {c}: {e}")
+
+    # Upstox returns newest-first — reverse to chronological order
+    data.reverse()
+    return data
+
+
+def _build_summary(data: list) -> dict:
+    closes      = [d["close"] for d in data]
+    latest      = closes[-1]
+    prev        = closes[-2] if len(closes) > 1 else latest
+    change_pct  = ((latest - prev) / prev * 100) if prev else 0.0
+    return {
+        "latest_close": latest,
+        "change_pct":   round(change_pct, 3),
+        "period_high":  max(d["high"] for d in data),
+        "period_low":   min(d["low"]  for d in data),
+    }
+
+
+# ── Core fetch functions ──────────────────────────────────────────────────────
+
+def fetch_upstox_intraday_today(symbol: str, interval: str = "5m") -> Dict:
+    """
+    Fetch today's intraday candles using the dedicated intraday endpoint.
+    Only available during / after market hours for the current day.
+
+    Endpoint: GET /v2/historical-candle/intraday/{instrumentKey}/{interval}
+    """
+    _check_credentials()
+    inst_key     = _upstox_key(symbol)
+    api_interval = _api_interval_intraday(interval)   # full interval set
+    is_intraday  = True
+
+    url = f"{UPSTOX_BASE_URL}/historical-candle/intraday/{inst_key}/{api_interval}"
+
+    logger.info(f"Upstox intraday-today: {symbol} {interval} → {url}")
 
     try:
-        # Upstox historical candle endpoint
-        url = f"{UPSTOX_BASE_URL}/historical-candle/intraday/{upstox_symbol}/{api_interval}/{from_date}/{to_date}"
+        resp = requests.get(url, headers=_headers(), timeout=10)
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response is not None else "?"
+        body   = e.response.text[:200] if e.response is not None else ""
+        logger.warning(f"Upstox intraday-today {status} for {symbol}: {body}")
+        raise ValueError(f"Intraday data not available for {symbol} today (HTTP {status}). Market may be closed.")
 
-        headers = get_upstox_headers()
+    body = resp.json()
+    candles = body.get("data", {}).get("candles", [])
 
-        logger.info(f"Fetching Upstox data: {upstox_symbol} ({from_date} to {to_date})")
+    if not candles:
+        raise ValueError(
+            f"No intraday data for {symbol} today. "
+            "Market may be closed or pre-market."
+        )
 
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
+    data = _parse_candles(candles, is_intraday=True)
+    return {
+        "symbol":      symbol,
+        "name":        UPSTOX_SYMBOLS[inst_key]["display_name"],
+        "interval":    interval,
+        "period":      "today",
+        "is_intraday": True,
+        "source":      "upstox",
+        "summary":     _build_summary(data),
+        "data":        data,
+        "count":       len(data),
+    }
 
-        data = response.json()
 
-        if not data.get("data") or not data["data"].get("candles"):
-            logger.warning(f"No data returned from Upstox for {symbol}")
-            raise ValueError(f"No market data available for {symbol}")
+def fetch_upstox_historical(
+    symbol: str,
+    period: str = "3mo",
+    interval: str = "1d",
+) -> Dict:
+    """
+    Fetch historical candles (daily, weekly, monthly, or intraday for past days).
 
-        # Parse candles into OHLCV format
-        candles = data["data"]["candles"]
-        ohlc_data = []
+    Endpoint: GET /v2/historical-candle/{instrumentKey}/{interval}/{toDate}/{fromDate}
 
-        for candle in candles:
-            # Upstox format: [timestamp, open, high, low, close, volume, oi]
-            ohlc_data.append(
-                {
-                    "date": candle[0],  # ISO timestamp
-                    "open": round(float(candle[1]), 2),
-                    "high": round(float(candle[2]), 2),
-                    "low": round(float(candle[3]), 2),
-                    "close": round(float(candle[4]), 2),
-                    "volume": int(candle[5]),
-                }
-            )
+    Upstox limits:
+      - Minute intervals: max 30 days lookback
+      - 60-minute:        max 365 days
+      - day/week/month:   no practical limit
+    """
+    _check_credentials()
+    inst_key     = _upstox_key(symbol)
+    api_interval = _api_interval_historical(interval)  # limited set only
+    is_intraday  = api_interval not in ("day", "week", "month")
 
-        # Calculate summary
-        closes = [c["close"] for c in ohlc_data]
-        if not closes:
-            raise ValueError(f"No valid candles for {symbol}")
+    days         = PERIOD_DAYS.get(period, 90)
+    days         = _clamp_days(days, api_interval)
 
-        latest_close = closes[-1]
-        prev_close = closes[-2] if len(closes) > 1 else closes[-1]
-        change = latest_close - prev_close
-        change_pct = (change / prev_close * 100) if prev_close else 0.0
+    to_date   = date_type.today()
+    from_date = to_date - timedelta(days=days)
 
-        period_high = max(c["high"] for c in ohlc_data)
-        period_low = min(c["low"] for c in ohlc_data)
+    # URL-encode the pipe in instrument key
+    inst_encoded = inst_key.replace("|", "%7C")
+    url = (
+        f"{UPSTOX_BASE_URL}/historical-candle"
+        f"/{inst_encoded}/{api_interval}"
+        f"/{to_date}/{from_date}"
+    )
 
-        result = {
-            "symbol": symbol,
-            "name": display_name,
-            "period": period,
-            "interval": interval,
-            "count": len(ohlc_data),
-            "source": "upstox",
-            "summary": {
-                "latest_close": round(latest_close, 2),
-                "prev_close": round(prev_close, 2),
-                "change": round(change, 2),
-                "change_pct": round(change_pct, 2),
-                "period_high": round(period_high, 2),
-                "period_low": round(period_low, 2),
-            },
-            "data": ohlc_data,
-        }
+    logger.info(
+        f"Upstox historical: {symbol} {interval}({api_interval}) "
+        f"{from_date} → {to_date}"
+    )
 
-        logger.info(f"Successfully fetched {len(ohlc_data)} candles for {symbol}")
-        return result
+    try:
+        resp = requests.get(url, headers=_headers(), timeout=15)
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response is not None else "?"
+        body   = e.response.text[:300] if e.response is not None else ""
+        logger.error(f"Upstox HTTP {status}: {body}")
+        raise ValueError(f"Upstox API error {status} for {symbol}: {body}")
 
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Upstox API request failed: {e}")
-        raise ValueError(f"Failed to fetch data from Upstox: {str(e)}")
-    except (KeyError, IndexError, ValueError) as e:
-        logger.error(f"Error parsing Upstox response: {e}")
-        raise ValueError(f"Invalid response from Upstox API: {str(e)}")
+    body    = resp.json()
+    candles = body.get("data", {}).get("candles", [])
 
+    if not candles:
+        raise ValueError(
+            f"No data returned from Upstox for {symbol} "
+            f"({interval}, {period}). "
+            "Check credentials or try a shorter period."
+        )
+
+    data = _parse_candles(candles, is_intraday)
+
+    return {
+        "symbol":      symbol,
+        "name":        UPSTOX_SYMBOLS[inst_key]["display_name"],
+        "interval":    interval,
+        "period":      period,
+        "is_intraday": is_intraday,
+        "source":      "upstox",
+        "summary":     _build_summary(data),
+        "data":        data,
+        "count":       len(data),
+    }
+
+
+# ── Public wrapper (called by market_service.py) ──────────────────────────────
+
+def fetch_upstox_market_data(
+    symbol: str,
+    period: str = "3mo",
+    interval: str = "1d",
+) -> Dict:
+    """
+    Main entry point — called by market_service.fetch_market_data().
+    Routes to the right Upstox endpoint based on interval and period.
+    """
+    api_interval = _api_interval(interval)
+    is_intraday  = api_interval not in ("day", "week", "month")
+
+    # If intraday AND period is "1d", use today's endpoint for freshest data
+    if is_intraday and period == "1d":
+        try:
+            return fetch_upstox_intraday_today(symbol, interval)
+        except ValueError:
+            # Market closed / pre-open — fall back to historical
+            logger.info("Today's intraday not available, falling back to historical")
+
+    # Otherwise use the historical endpoint (covers both daily and intraday)
+    return fetch_upstox_historical(symbol, period, interval)
+
+
+# ── Quote (LTP) ───────────────────────────────────────────────────────────────
 
 def fetch_upstox_quote(symbol: str) -> Dict:
-    """
-    Fetch current market quote (LTP) for a symbol.
+    """Fetch current Last Traded Price (LTP) for a symbol."""
+    _check_credentials()
+    inst_key = _upstox_key(symbol)
 
-    Args:
-        symbol: Short code like "^NSEI"
-
-    Returns:
-        Dict with quote data
-    """
-
-    if not validate_upstox_credentials():
-        raise ValueError("Upstox credentials not configured")
-
-    if symbol not in SYMBOL_TO_UPSTOX:
-        raise ValueError(f"Unknown symbol: {symbol}")
-
-    upstox_symbol = SYMBOL_TO_UPSTOX[symbol]
-    display_name = UPSTOX_SYMBOLS[upstox_symbol]["display_name"]
+    url    = f"{UPSTOX_BASE_URL}/market-quote/ltp"
+    params = {"symbol": inst_key}
 
     try:
-        url = f"{UPSTOX_BASE_URL}/market-quote/ltp"
-
-        headers = get_upstox_headers()
-        params = {"symbol": upstox_symbol}
-
-        response = requests.get(url, headers=headers, params=params, timeout=10)
-        response.raise_for_status()
-
-        data = response.json()
-
-        if not data.get("data") or not data["data"].get(upstox_symbol):
-            raise ValueError(f"No quote data for {symbol}")
-
-        quote = data["data"][upstox_symbol]
+        resp = requests.get(url, headers=_headers(), params=params, timeout=10)
+        resp.raise_for_status()
+        body  = resp.json()
+        quote = body.get("data", {}).get(inst_key, {})
 
         return {
             "symbol": symbol,
-            "name": display_name,
-            "ltp": round(float(quote.get("ltp", 0)), 2),
-            "last_traded_time": quote.get("last_traded_time"),
+            "name":   UPSTOX_SYMBOLS[inst_key]["display_name"],
+            "ltp":    round(float(quote.get("ltp", 0)), 2),
             "source": "upstox",
         }
+    except Exception as e:
+        logger.error(f"Upstox quote fetch failed: {e}")
+        raise ValueError(f"Quote fetch failed for {symbol}: {e}")
 
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to fetch quote from Upstox: {e}")
-        raise ValueError(f"Failed to fetch quote: {str(e)}")
 
-
-def fetch_upstox_market_data(
-    symbol: str, period: str = "3mo", interval: str = "1d"
-) -> Dict:
-    """
-    Main function to fetch market data from Upstox.
-    Wrapper around fetch_upstox_historical_data for consistency.
-    """
-    return fetch_upstox_historical_data(symbol, period, interval)
-
+# ── Utility ───────────────────────────────────────────────────────────────────
 
 def get_upstox_supported_symbols() -> Dict[str, str]:
-    """Get list of supported symbols and their display names."""
     return {
-        short_code: info["display_name"]
-        for short_code, info in [(v["short_code"], v) for v in UPSTOX_SYMBOLS.values()]
+        v["short_code"]: v["display_name"]
+        for v in UPSTOX_SYMBOLS.values()
     }

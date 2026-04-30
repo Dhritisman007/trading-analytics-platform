@@ -23,32 +23,23 @@ NSE_HEADERS = {
 }
 
 
-def _parse_nse_response(data: list) -> dict | None:
-    """
-    Parse the new NSE FII/DII API format.
-    Returns 2 rows per call: one for FII/FPI, one for DII.
-    Each row has: category, date, buyValue, sellValue, netValue
-    """
+def _parse_nse_row(row: dict) -> dict | None:
+    """Parse a single row from NSE FII/DII API response."""
     try:
-        fii_row = next((r for r in data if "FII" in r.get("category", "")), None)
-        dii_row = next((r for r in data if r.get("category") == "DII"), None)
-
-        if not fii_row or not dii_row:
-            return None
-
-        # Parse date — NSE format: "28-Apr-2026"
-        date_str = fii_row.get("date", "")
+        date_str = row.get("date", "")
+        # NSE returns dates like "01-Jan-2024"
         try:
             date = datetime.strptime(date_str, "%d-%b-%Y").date().isoformat()
         except ValueError:
             date = date_str
 
-        fii_buy  = float(fii_row.get("buyValue",  0) or 0)
-        fii_sell = float(fii_row.get("sellValue", 0) or 0)
-        fii_net  = float(fii_row.get("netValue",  0) or 0)
-        dii_buy  = float(dii_row.get("buyValue",  0) or 0)
-        dii_sell = float(dii_row.get("sellValue", 0) or 0)
-        dii_net  = float(dii_row.get("netValue",  0) or 0)
+        fii_buy  = float(row.get("fiiBuy",  0) or 0)
+        fii_sell = float(row.get("fiiSell", 0) or 0)
+        dii_buy  = float(row.get("diiBuy",  0) or 0)
+        dii_sell = float(row.get("diiSell", 0) or 0)
+
+        fii_net = fii_buy - fii_sell
+        dii_net = dii_buy - dii_sell
 
         return {
             "date": date,

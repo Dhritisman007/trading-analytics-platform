@@ -13,6 +13,8 @@ import News       from './pages/News'
 import Predict    from './pages/Predict'
 import Backtest   from './pages/Backtest'
 import Risk       from './pages/Risk'
+import Charts             from './pages/Charts'
+import AdvancedIndicators from './pages/AdvancedIndicators'
 
 // ── QueryClient ───────────────────────────────────────────────────────────────
 const queryClient = new QueryClient({
@@ -28,7 +30,9 @@ const queryClient = new QueryClient({
 // ── Navigation items ──────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { to: '/',           label: 'Dashboard',   icon: '📊' },
+  { to: '/charts',     label: 'Charts',      icon: '📉' },
   { to: '/indicators', label: 'Indicators',  icon: '📈' },
+  { to: '/advanced',   label: 'Advanced',    icon: '🔬' },
   { to: '/smc',        label: 'SMC / FVG',   icon: '🎯' },
   { to: '/fii-dii',    label: 'FII / DII',   icon: '🏦' },
   { to: '/news',       label: 'News',        icon: '📰' },
@@ -178,7 +182,9 @@ function Layout() {
       }}>
         <Routes>
           <Route path="/"           element={<Dashboard />} />
+          <Route path="/charts"      element={<Charts />} />
           <Route path="/indicators" element={<Indicators />} />
+          <Route path="/advanced"   element={<AdvancedIndicators />} />
           <Route path="/smc"        element={<SMC />} />
           <Route path="/fii-dii"    element={<FiiDii />} />
           <Route path="/news"       element={<News />} />

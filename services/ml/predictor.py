@@ -49,10 +49,11 @@ def predict(
 
     model, scaler, metadata = load_model(symbol)
 
-    # ── Step 2: Fetch latest indicators ───────────────────────────────────
+    # Always fetch 2y for prediction — need 200+ rows for rolling features
+    # (close_above_200ma, volatility_20d, return_20d, etc.)
     indicator_data = get_indicators(
         symbol=symbol,
-        period=period,
+        period="2y",
         interval="1d",
     )
 

@@ -161,6 +161,48 @@ tail -f frontend.log
 
 ---
 
+## 🔑 Upstox Token — Intraday Chart Data
+
+Upstox provides **real NSE/BSE intraday data** (1m, 5m, 15m, 30m, 1H candles).
+The token must be regenerated **once per day** (it expires at midnight IST).
+
+### Step 1 — Make sure .env has your Upstox credentials
+```
+UPSTOX_API_KEY=your_api_key
+UPSTOX_API_SECRET=your_api_secret
+UPSTOX_REDIRECT_URI=http://127.0.0.1:8000/auth/upstox/callback
+DATA_PROVIDER=upstox
+```
+
+### Step 2 — Generate token (browser, once per day)
+```
+http://127.0.0.1:8000/auth/upstox/login
+```
+This opens the Upstox login page → log in → get redirected back with your token.
+
+### Step 3 — Copy token into .env
+```
+UPSTOX_ACCESS_TOKEN=<paste token here>
+```
+
+### Step 4 — Restart the backend
+```bash
+# Ctrl+C the running server, then:
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Upstox intraday limits
+| Timeframe | Upstox interval | Max lookback |
+|-----------|----------------|--------------|
+| 1m        | 1minute        | 30 days      |
+| 5m        | 5minute        | 30 days      |
+| 15m       | 15minute       | 30 days      |
+| 30m       | 30minute       | 30 days      |
+| 1H        | 60minute       | 365 days     |
+| 1D / 1W   | day / week     | No limit     |
+
+---
+
 ## 📚 Documentation
 
 - **Backend Docs:** `http://localhost:8000/docs` (Swagger UI)

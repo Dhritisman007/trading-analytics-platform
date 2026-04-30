@@ -19,7 +19,7 @@ scheduler = BackgroundScheduler(
 def _refresh_market_data():
     """Refresh Nifty + Sensex OHLC data every 5 minutes."""
     from services.market_service import fetch_market_data
-    from core.cache import set_cache
+    from core.cache import cache
 
     symbols = [
         ("^NSEI",  "3mo", "1d"),
@@ -30,7 +30,7 @@ def _refresh_market_data():
         try:
             data = fetch_market_data(symbol=symbol, period=period, interval=interval)
             cache_key = f"market:{symbol}:{period}:{interval}"
-            set_cache(cache_key, data, ttl_seconds=360)
+            cache.set(cache_key, data, ttl_seconds=360)
             logger.info(f"Refreshed market data: {cache_key}")
         except Exception as e:
             logger.error(f"Failed to refresh market data for {symbol}: {e}")
@@ -39,7 +39,7 @@ def _refresh_market_data():
 def _refresh_indicators():
     """Refresh indicators for Nifty 50 every 15 minutes."""
     from services.indicator_calculator import get_indicators
-    from core.cache import set_cache
+    from core.cache import cache
 
     configs = [
         ("^NSEI",  "3mo", "1d", 14, 20, 14),
@@ -52,7 +52,7 @@ def _refresh_indicators():
                 rsi_window=rsi_w, ema_window=ema_w, atr_window=atr_w,
             )
             cache_key = f"indicators:{symbol}:{period}:{interval}:{rsi_w}:{ema_w}:{atr_w}"
-            set_cache(cache_key, data, ttl_seconds=960)
+            cache.set(cache_key, data, ttl_seconds=960)
             logger.info(f"Refreshed indicators: {cache_key}")
         except Exception as e:
             logger.error(f"Failed to refresh indicators for {symbol}: {e}")
@@ -61,25 +61,52 @@ def _refresh_indicators():
 def _refresh_fvgs():
     """Refresh FVG detection every 30 minutes."""
     from services.fvg_service import detect_fvgs
-    from core.cache import set_cache
+    from core.cache import cache
 
     try:
         data = detect_fvgs(symbol="^NSEI", period="3mo", interval="1d")
         cache_key = "fvg:^NSEI:3mo:1d"
-        set_cache(cache_key, data, ttl_seconds=1860)
+        cache.set(cache_key, data, ttl_seconds=1860)
         logger.info(f"Refreshed FVGs: {cache_key}")
     except Exception as e:
         logger.error(f"Failed to refresh FVGs: {e}")
 
 
 def _refresh_news():
-    """Refresh news cache every 15 minutes."""                    # ← NEW (Day 12)
+    """Refresh news cache every 15 minutes."""
     from services.news.news_service import refresh_news
     try:
         result = refresh_news()
         logger.info(f"Refreshed news: {result['sources']['total']} articles")
     except Exception as e:
         logger.error(f"Failed to refresh news: {e}")
+
+
+def _refresh_fii_dii():
+    """Refresh FII/DII data once per day after market close."""
+    from services.fii_dii.fii_dii_service import refresh_fii_dii
+    try:
+        result = refresh_fii_dii()
+        logger.info(f"Refreshed FII/DII: {result.get('days_fetched')} days")
+    except Exception as e:
+        logger.error(f"Failed to refresh FII/DII: {e}")
+
+
+def _refresh_options():
+    """Refresh options chain data every 5 minutes during market hours."""
+    from services.options.options_service import get_option_chain
+
+    symbols = ["NIFTY", "BANKNIFTY"]
+    for symbol in symbols:
+        try:
+            data = get_option_chain(symbol=symbol)
+            logger.info(
+                f"Options refreshed: {symbol} "
+                f"PCR={data['pcr']['pcr_oi']} "
+                f"MaxPain={data['max_pain']['max_pain']}"
+            )
+        except Exception as e:
+            logger.warning(f"Options refresh failed for {symbol}: {e}")
 
 
 def start_scheduler():
@@ -105,18 +132,33 @@ def start_scheduler():
         name="Refresh FVGs",
         replace_existing=True,
     )
-    scheduler.add_job(                                            # ← NEW (Day 12)
+    scheduler.add_job(
         _refresh_news,
         trigger=IntervalTrigger(minutes=15),
         id="refresh_news",
         name="Refresh financial news",
         replace_existing=True,
     )
+    scheduler.add_job(
+        _refresh_fii_dii,
+        trigger=CronTrigger(hour=16, minute=30, timezone="Asia/Kolkata"),
+        id="refresh_fii_dii",
+        name="Refresh FII/DII data",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        _refresh_options,
+        trigger=IntervalTrigger(minutes=5),
+        id="refresh_options",
+        name="Refresh options chain",
+        replace_existing=True,
+    )
 
     scheduler.start()
     logger.info(
         "Scheduler started — "
-        "market:5min · indicators:15min · fvgs:30min · news:15min"
+        "market:5min · indicators:15min · fvgs:30min · "
+        "news:15min · fii_dii:16:30IST · options:5min"
     )
 
 
@@ -140,25 +182,3 @@ def get_scheduler_status() -> dict:
             "next_run": str(job.next_run_time) if job.next_run_time else None,
         })
     return {"running": True, "jobs": jobs}
-# Add this function to core/scheduler.py
-
-def _refresh_fii_dii():
-    """Refresh FII/DII data once per day after market close."""
-    from services.fii_dii.fii_dii_service import refresh_fii_dii
-    try:
-        result = refresh_fii_dii()
-        logger.info(f"Refreshed FII/DII: {result.get('days_fetched')} days")
-    except Exception as e:
-        logger.error(f"Failed to refresh FII/DII: {e}")
-
-
-# Add inside start_scheduler() — after existing jobs:
-from apscheduler.triggers.cron import CronTrigger
-
-scheduler.add_job(
-    _refresh_fii_dii,
-    trigger=CronTrigger(hour=16, minute=30, timezone="Asia/Kolkata"),
-    id="refresh_fii_dii",
-    name="Refresh FII/DII data",
-    replace_existing=True,
-)
