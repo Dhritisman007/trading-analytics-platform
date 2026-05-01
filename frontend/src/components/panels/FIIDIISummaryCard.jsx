@@ -1,7 +1,7 @@
 // src/components/panels/FIIDIISummaryCard.jsx
 
 import { formatCrore, formatNumber } from '../../utils/formatters'
-import SignalBadge from '../ui/SignalBadge'
+import SignalBadge from '../ui/Signalbadge'
 
 const FlowRow = ({ label, data, color }) => (
   <div style={{

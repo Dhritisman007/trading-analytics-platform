@@ -1,7 +1,7 @@
 // src/components/panels/SMCSummaryPanel.jsx
 
 import { formatPrice } from '../../utils/formatters'
-import SignalBadge from '../ui/SignalBadge'
+import SignalBadge from '../ui/Signalbadge'
 
 export default function SMCSummaryPanel({ smcData }) {
     if (!smcData) return null
