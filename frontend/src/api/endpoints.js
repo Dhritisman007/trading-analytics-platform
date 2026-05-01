@@ -122,6 +122,21 @@ export const liveApi = {
     client.get(`/live/${symbol}`),
 }
 
+// ── Smart Money Concepts (SMC) ────────────────────────────────────────────────
+export const smcApi = {
+  getFull: (symbol = '^NSEI', period = '3mo') =>
+    client.get('/smc-full/', { params: { symbol, period } }),
+
+  getVolumeProfile: (symbol = '^NSEI', period = '3mo', bins = 30) =>
+    client.get('/smc-full/volume-profile', { params: { symbol, period, bins } }),
+
+  getVwap: (symbol = '^NSEI', period = '1mo') =>
+    client.get('/smc-full/vwap', { params: { symbol, period } }),
+
+  getKillZones: () =>
+    client.get('/smc-full/kill-zones'),
+}
+
 // ── Health ────────────────────────────────────────────────────────────────────
 export const healthApi = {
   check: () => client.get('/health'),
