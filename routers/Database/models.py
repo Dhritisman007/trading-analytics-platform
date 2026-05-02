@@ -6,7 +6,7 @@ from sqlalchemy import (
     DateTime, Date, Text, JSON, Index,
     UniqueConstraint,
 )
-from database.engine import Base
+from routers.Database.engine import Base
 
 
 def utcnow():
@@ -178,3 +178,46 @@ class FiiDiiRecord(Base):
 
     def __repr__(self):
         return f"<FiiDii {self.date} fii_net={self.fii_net}>"
+
+
+class WatchlistItem(Base):
+    """User watchlist — saved symbols."""
+    __tablename__ = "watchlist"
+
+    id         = Column(Integer,     primary_key=True, index=True)
+    symbol     = Column(String(20),  nullable=False)
+    name       = Column(String(100), nullable=True)
+    added_at   = Column(DateTime(timezone=True), default=utcnow)
+    notes      = Column(Text,        nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("symbol", name="uq_watchlist_symbol"),
+    )
+
+
+class TradeJournalEntry(Base):
+    """Trade journal — log every trade with full details."""
+    __tablename__ = "trade_journal"
+
+    id           = Column(Integer,     primary_key=True, index=True)
+    symbol       = Column(String(20),  nullable=False)
+    direction    = Column(String(10),  nullable=False)   # LONG or SHORT
+    entry_price  = Column(Float,       nullable=False)
+    exit_price   = Column(Float,       nullable=True)
+    stop_loss    = Column(Float,       nullable=True)
+    target       = Column(Float,       nullable=True)
+    quantity     = Column(Integer,     nullable=True)
+    entry_date   = Column(DateTime(timezone=True), nullable=False)
+    exit_date    = Column(DateTime(timezone=True), nullable=True)
+    pnl          = Column(Float,       nullable=True)
+    pnl_pct      = Column(Float,       nullable=True)
+    status       = Column(String(20),  default="open")   # open, closed, cancelled
+    setup        = Column(String(50),  nullable=True)    # OB, FVG, RSI, etc.
+    notes        = Column(Text,        nullable=True)
+    tags         = Column(JSON,        nullable=True)
+    created_at   = Column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (
+        Index("ix_journal_symbol", "symbol"),
+        Index("ix_journal_date",   "entry_date"),
+    )

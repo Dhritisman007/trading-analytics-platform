@@ -170,7 +170,11 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     df["volume_momentum"] = np.where(volume_ma_5 > 0, (df["volume"] - volume_ma_5) / volume_ma_5, 0)
     
     # ── Target: BUY if next day's close is higher, SELL otherwise ─────────
-    df["target"] = (df["close"].shift(-1) > df["close"]).astype(int)
+    # We must explicitly set the last row to NaN before converting to int 
+    # because shift(-1) is NaN, and NaN > x is False (0) instead of NaN.
+    target_bool = df["close"].shift(-1) > df["close"]
+    df["target"] = target_bool.astype(float)
+    df.loc[df["close"].shift(-1).isna(), "target"] = np.nan
     
     # ── Clean up NaN: fill with time-series continuity, not hard drop ──────
     # Forward-fill: carry last known value forward (good for slowly-changing features)
@@ -183,5 +187,6 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     # Only drop rows where the target is NaN
     # (target is NaN for the very last row — no next-day close yet)
     df = df.dropna(subset=["target"])
+    df["target"] = df["target"].astype(int)
 
     return df
