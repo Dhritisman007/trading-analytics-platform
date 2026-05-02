@@ -25,8 +25,10 @@ class Settings(BaseSettings):
     )
     upstox_access_token: str = Field(default="", alias="UPSTOX_ACCESS_TOKEN")
 
-    # NewsAPI
+    # NewsAPI & OpenAI
     newsapi_key: str = Field(default="", alias="NEWSAPI_KEY")
+    openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
+    port: int = Field(default=8000, alias="PORT")
 
     class Config:
         env_file = ".env"
@@ -35,5 +37,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-# core/config.py — add this field to Settings class
-port: int = 8000

@@ -25,6 +25,7 @@ import Backtest             from './pages/Backtest'
 import News                 from './pages/News'
 import FiiDii               from './pages/FiiDii'
 import Journal              from './pages/Journal'
+import Charts               from './pages/Charts'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,6 +39,7 @@ const NAV_ITEMS = [
   { to: '/advanced',   icon: Layers,          label: 'Advanced'   },
   { to: '/smc',        icon: CandlestickChart, label: 'SMC / FVG' },
   { to: '/predict',    icon: Brain,           label: 'Predict'    },
+  { to: '/charts',     icon: CandlestickChart,label: 'Index Charts'},
   { to: '/risk',       icon: Shield,          label: 'Risk'       },
   { to: '/backtest',   icon: FlaskConical,    label: 'Backtest'   },
   { to: '/news',       icon: Newspaper,       label: 'News'       },
@@ -232,6 +234,7 @@ function AppInner() {
             <Route path="/indicators" element={<Indicators />}         />
             <Route path="/advanced"   element={<AdvancedIndicators />} />
             <Route path="/smc"        element={<SMC />}                />
+            <Route path="/charts"     element={<Charts />}             />
             <Route path="/predict"    element={<Predict />}            />
             <Route path="/risk"       element={<Risk />}               />
             <Route path="/backtest"   element={<Backtest />}           />

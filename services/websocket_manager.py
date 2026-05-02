@@ -137,6 +137,11 @@ async def _upstox_ws_connect() -> None:
                 "Api-Version": "2.0",
             }
 
+            import ssl
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
             logger.info("Connecting to Upstox WebSocket feed...")
 
             async with websockets.connect(
@@ -144,6 +149,7 @@ async def _upstox_ws_connect() -> None:
                 additional_headers=headers,
                 ping_interval=30,
                 ping_timeout=10,
+                ssl=ssl_context,
             ) as ws:
                 _connected = True
                 logger.info("Upstox WebSocket connected")
