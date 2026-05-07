@@ -24,10 +24,16 @@ def calculate_volume_profile(df: pd.DataFrame, num_bins: int = 40) -> dict:
     bin_centers = (bins[:-1] + bins[1:]) / 2
     bin_volumes = np.zeros(num_bins)
 
+    total_volume = float(df["volume"].sum())
+
+    # If all volume is zero (e.g. Upstox index data), distribute evenly
+    # based on price overlap so the profile still shows price structure.
+    use_price_weight = total_volume == 0
+
     for _, row in df.iterrows():
         candle_low  = float(row["low"])
         candle_high = float(row["high"])
-        volume      = float(row["volume"])
+        volume      = 1.0 if use_price_weight else float(row["volume"])
         rng         = candle_high - candle_low
 
         for i, (bl, bh) in enumerate(zip(bins[:-1], bins[1:])):
@@ -83,6 +89,7 @@ def calculate_volume_profile(df: pd.DataFrame, num_bins: int = 40) -> dict:
         "position":      position,
         "signal":        signal,
         "signal_desc":   signal_desc,
+        "no_volume_data": use_price_weight,
         "histogram": [
             {
                 "price":      format_number(float(bin_centers[i])),
@@ -112,7 +119,8 @@ def detect_sweeps(
     opens  = df["open"].values
     vols   = df["volume"].values
 
-    avg_vol = float(df["volume"].rolling(20).mean().iloc[-1]) or 1
+    raw_avg = df["volume"].rolling(20).mean().iloc[-1]
+    avg_vol = float(raw_avg) if (pd.notna(raw_avg) and float(raw_avg) > 0) else 1.0
 
     for i in range(swing_lookback, len(df)):
         recent_high = max(highs[i - swing_lookback:i])
@@ -180,48 +188,69 @@ def detect_sweeps(
 
 def calculate_vwap_series(df: pd.DataFrame) -> dict:
     import numpy as np
+    import math
 
-    tp        = (df["high"] + df["low"] + df["close"]) / 3
-    tp_vol    = tp * df["volume"]
-    cum_tpvol = tp_vol.cumsum()
-    cum_vol   = df["volume"].cumsum()
-    vwap      = cum_tpvol / cum_vol.replace(0, np.nan)
+    total_volume = float(df["volume"].sum())
+    no_volume    = total_volume == 0
 
-    tp_sq     = (tp ** 2 * df["volume"]).cumsum()
-    variance  = tp_sq / cum_vol.replace(0, np.nan) - vwap ** 2
-    std       = variance.apply(lambda x: np.sqrt(max(float(x), 0)) if pd.notna(x) else 0)
+    tp = (df["high"] + df["low"] + df["close"]) / 3
 
-    current    = float(df["close"].iloc[-1])
-    vwap_val   = float(vwap.iloc[-1])
-    std_val    = float(std.iloc[-1])
+    if no_volume:
+        # When volume is unavailable (Upstox indices), use equal-weighted
+        # typical price as a proxy so we still return useful levels.
+        vwap     = tp.expanding().mean()
+        tp_sq    = (tp ** 2).expanding().mean()
+        variance = tp_sq - vwap ** 2
+        std      = variance.apply(lambda x: math.sqrt(max(float(x), 0)) if pd.notna(x) else 0.0)
+    else:
+        tp_vol    = tp * df["volume"]
+        cum_tpvol = tp_vol.cumsum()
+        cum_vol   = df["volume"].cumsum()
+        vwap      = cum_tpvol / cum_vol.replace(0, np.nan)
 
+        tp_sq     = (tp ** 2 * df["volume"]).cumsum()
+        variance  = tp_sq / cum_vol.replace(0, np.nan) - vwap ** 2
+        std       = variance.apply(lambda x: math.sqrt(max(float(x), 0)) if pd.notna(x) else 0.0)
+
+    current  = float(df["close"].iloc[-1])
+    vwap_val = format_number(vwap.iloc[-1])
+    std_val  = format_number(std.iloc[-1])
+
+    # Build series — use format_number to sanitize any remaining NaN/inf
     series = []
     for date, v in vwap.items():
-        s = float(std.loc[date])
+        s = float(std.loc[date]) if pd.notna(std.loc[date]) else 0.0
+        fv = format_number(v)
+        if fv is None:
+            continue  # skip rows where VWAP couldn't be computed
         series.append({
             "date":   str(date)[:10],
-            "vwap":   format_number(v),
+            "vwap":   fv,
             "upper1": format_number(float(v) + s),
             "lower1": format_number(float(v) - s),
             "upper2": format_number(float(v) + 2 * s),
             "lower2": format_number(float(v) - 2 * s),
         })
 
-    above = current > vwap_val
+    above = current > vwap_val if vwap_val is not None else False
+    diff_pct = format_number((current - vwap_val) / vwap_val * 100) if vwap_val else 0
+
     return {
-        "vwap":       format_number(vwap_val),
-        "std":        format_number(std_val),
-        "upper_1sd":  format_number(vwap_val + std_val),
-        "lower_1sd":  format_number(vwap_val - std_val),
-        "upper_2sd":  format_number(vwap_val + 2 * std_val),
-        "lower_2sd":  format_number(vwap_val - 2 * std_val),
+        "vwap":       vwap_val,
+        "std":        std_val,
+        "upper_1sd":  format_number(vwap_val + std_val) if vwap_val is not None and std_val is not None else None,
+        "lower_1sd":  format_number(vwap_val - std_val) if vwap_val is not None and std_val is not None else None,
+        "upper_2sd":  format_number(vwap_val + 2 * std_val) if vwap_val is not None and std_val is not None else None,
+        "lower_2sd":  format_number(vwap_val - 2 * std_val) if vwap_val is not None and std_val is not None else None,
         "above_vwap": above,
         "signal":     "bullish" if above else "bearish",
-        "diff_pct":   format_number((current - vwap_val) / vwap_val * 100) if vwap_val else "0",
+        "diff_pct":   diff_pct,
+        "no_volume_data": no_volume,
         "description": (
-            f"Price {'above' if above else 'below'} VWAP ₹{format_number(vwap_val)} "
-            f"by {format_number(abs((current - vwap_val) / vwap_val * 100)) if vwap_val else '0'}%. "
+            f"Price {'above' if above else 'below'} VWAP ₹{vwap_val} "
+            f"by {format_number(abs(diff_pct)) if diff_pct else '0'}%. "
             f"{'Institutions net buyers today.' if above else 'Institutions net sellers today.'}"
+            f"{' (Note: volume data unavailable — using price-weighted average.)' if no_volume else ''}"
         ),
         "series": series,
     }
@@ -231,23 +260,39 @@ def calculate_vwap_series(df: pd.DataFrame) -> dict:
 
 def analyse_volume(df: pd.DataFrame) -> dict:
     import numpy as np
+    import math
 
     vol        = df["volume"]
     closes     = df["close"]
-    avg_20     = float(vol.rolling(20).mean().iloc[-1])
-    avg_50     = float(vol.rolling(50).mean().iloc[-1]) if len(df) >= 50 else avg_20
-    latest_vol = float(vol.iloc[-1])
+    total_volume = float(vol.sum())
+    no_volume    = total_volume == 0
+
+    # Guard against NaN from rolling on zero-volume data
+    def safe_float(val, default=0.0):
+        v = float(val)
+        return default if (math.isnan(v) or math.isinf(v)) else v
+
+    avg_20     = safe_float(vol.rolling(20).mean().iloc[-1])
+    avg_50     = safe_float(vol.rolling(50).mean().iloc[-1]) if len(df) >= 50 else avg_20
+    latest_vol = safe_float(vol.iloc[-1])
     ratio_20   = round(latest_vol / avg_20, 2) if avg_20 else 1
 
     # Volume trend — is volume expanding or contracting?
-    vol_ma5  = float(vol.rolling(5).mean().iloc[-1])
-    vol_ma20 = float(vol.rolling(20).mean().iloc[-1])
-    vol_trend = "expanding" if vol_ma5 > vol_ma20 * 1.1 else \
-                "contracting" if vol_ma5 < vol_ma20 * 0.9 else "normal"
+    vol_ma5  = safe_float(vol.rolling(5).mean().iloc[-1])
+    vol_ma20 = safe_float(vol.rolling(20).mean().iloc[-1])
+
+    if no_volume:
+        vol_trend = "unavailable"
+    elif vol_ma5 > vol_ma20 * 1.1:
+        vol_trend = "expanding"
+    elif vol_ma5 < vol_ma20 * 0.9:
+        vol_trend = "contracting"
+    else:
+        vol_trend = "normal"
 
     # Up-volume vs down-volume
-    up_vol   = float(vol[closes > closes.shift()].sum())
-    down_vol = float(vol[closes < closes.shift()].sum())
+    up_vol   = safe_float(vol[closes > closes.shift()].sum())
+    down_vol = safe_float(vol[closes < closes.shift()].sum())
     total    = up_vol + down_vol
     up_pct   = round(up_vol / total * 100, 1) if total > 0 else 50
 
@@ -261,6 +306,16 @@ def analyse_volume(df: pd.DataFrame) -> dict:
             "vol_ratio": round(float(row["volume"]) / avg_20, 2) if avg_20 else 1.0,
         })
 
+    desc = (
+        "Volume data is not available for this index."
+        if no_volume
+        else (
+            f"Today's volume is {ratio_20}× the 20-day average. "
+            f"Volume is {vol_trend}. "
+            f"{up_pct}% of recent volume is on up-candles."
+        )
+    )
+
     return {
         "latest_volume":  int(latest_vol),
         "avg_volume_20":  int(avg_20),
@@ -270,12 +325,9 @@ def analyse_volume(df: pd.DataFrame) -> dict:
         "up_volume_pct":  up_pct,
         "down_volume_pct": round(100 - up_pct, 1),
         "is_high_volume": ratio_20 > 1.5,
-        "description": (
-            f"Today's volume is {ratio_20}× the 20-day average. "
-            f"Volume is {vol_trend}. "
-            f"{up_pct}% of recent volume is on up-candles."
-        ),
-        "recent_bars": recent,
+        "no_volume_data": no_volume,
+        "description":    desc,
+        "recent_bars":    recent,
     }
 
 
