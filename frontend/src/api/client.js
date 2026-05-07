@@ -31,8 +31,8 @@ client.interceptors.response.use(
   (error) => {
     const status = error.response?.status
 
-    // 502 or missing response = backend down or proxy failure
-    if (status === 502 || !error.response) {
+    // 502/404 or missing response = backend down, wrong URL, or proxy failure
+    if (status === 502 || status === 404 || !error.response) {
       return Promise.reject(
         new Error('Backend server is not running. Start uvicorn and retry.')
       )

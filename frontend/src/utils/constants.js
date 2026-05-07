@@ -47,7 +47,8 @@ export const CHART_COLORS = {
   volume: '#B4B2A9',
 }
 
-export const WS_URL = 'ws://127.0.0.1:8000/live/ws/feed'
+export const WS_URL =
+  import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000/live/ws/feed'
 
 export const NEWS_SOURCES = [
   { value: null, label: 'All sources' },
