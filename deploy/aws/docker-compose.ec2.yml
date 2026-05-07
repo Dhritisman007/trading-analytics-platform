@@ -1,0 +1,8 @@
+services:
+  api:
+    image: ${ECR_API_IMAGE}
+    build: null
+
+  frontend:
+    image: ${ECR_FRONTEND_IMAGE}
+    build: null
