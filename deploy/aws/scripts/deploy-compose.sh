@@ -19,8 +19,9 @@ echo "Service status:"
 docker compose ps
 
 echo "Waiting for API health..."
+API_HEALTH_URL="${API_HEALTH_URL:-http://localhost:8000/health}"
 for i in {1..30}; do
-  if curl -fsS http://localhost:8000/health >/dev/null; then
+  if curl -fsS "${API_HEALTH_URL}" >/dev/null; then
     echo "API is healthy"
     exit 0
   fi

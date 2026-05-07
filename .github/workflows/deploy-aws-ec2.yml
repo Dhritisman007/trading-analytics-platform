@@ -79,9 +79,8 @@ jobs:
             cd "${{ secrets.EC2_APP_DIR }}"
             echo "ECR_API_IMAGE=${{ needs.build-and-push.outputs.api_image }}" > deploy/aws/.ecr.env
             echo "ECR_FRONTEND_IMAGE=${{ needs.build-and-push.outputs.frontend_image }}" >> deploy/aws/.ecr.env
-            AWS_REGION="${{ secrets.AWS_REGION }}"
             ECR_REGISTRY="$(echo "${{ needs.build-and-push.outputs.api_image }}" | cut -d'/' -f1)"
-            aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+            aws ecr get-login-password --region "${{ secrets.AWS_REGION }}" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
             set -a
             . deploy/aws/.ecr.env
             set +a
