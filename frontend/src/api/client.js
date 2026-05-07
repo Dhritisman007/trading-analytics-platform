@@ -31,10 +31,17 @@ client.interceptors.response.use(
   (error) => {
     const status = error.response?.status
 
-    // 502/404 or missing response = backend down, wrong URL, or proxy failure
-    if (status === 502 || status === 404 || !error.response) {
+    // 502 or missing response = backend down or proxy failure
+    if (status === 502 || !error.response) {
       return Promise.reject(
         new Error('Backend server is not running. Start uvicorn and retry.')
+      )
+    }
+
+    // 404 on an API call typically means VITE_API_BASE_URL points to the wrong URL
+    if (status === 404) {
+      return Promise.reject(
+        new Error('API endpoint not found. Check your VITE_API_BASE_URL configuration.')
       )
     }
 
