@@ -18,6 +18,12 @@ POSTGRES_DB="${POSTGRES_DB:-trading_db}"
 
 docker exec "${POSTGRES_CONTAINER}" pg_dump -U "${POSTGRES_USER}" "${POSTGRES_DB}" | gzip > "${BACKUP_FILE}"
 
+if [[ ! -s "${BACKUP_FILE}" ]]; then
+  rm -f "${BACKUP_FILE}"
+  echo "Backup failed: output file is empty"
+  exit 1
+fi
+
 aws s3 cp "${BACKUP_FILE}" "s3://${S3_BUCKET}/postgres/${TIMESTAMP}.sql.gz" --region "${AWS_REGION}"
 
 echo "Uploaded backup to s3://${S3_BUCKET}/postgres/${TIMESTAMP}.sql.gz"

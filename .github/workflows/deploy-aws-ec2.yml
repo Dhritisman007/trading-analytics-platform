@@ -69,7 +69,7 @@ jobs:
 
     steps:
       - name: Deploy via SSH to EC2
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -88,3 +88,4 @@ jobs:
             docker compose -f docker-compose.yml -f deploy/aws/docker-compose.ec2.yml pull
             docker compose -f docker-compose.yml -f deploy/aws/docker-compose.ec2.yml up -d
             docker compose ps
+            docker logout "$ECR_REGISTRY"
